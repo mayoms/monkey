@@ -14,6 +14,7 @@ type IfExpression struct {
 
 func (ifex *IfExpression) expressionNode()      {}
 func (ifex *IfExpression) TokenLiteral() string { return ifex.Token.Literal }
+
 func (ifex *IfExpression) String() string {
 	var out bytes.Buffer
 
