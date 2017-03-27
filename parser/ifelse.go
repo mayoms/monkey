@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"go/token"
 	"monkey/ast"
+	"monkey/token"
 )
 
 func (p *Parser) parseIfExpression() ast.Expression {
@@ -22,5 +22,6 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	if p.expectPeek(token.ELSE) && p.expectPeek(token.LBRACE) {
 		expression.Alternative = p.parseBlockStatement().(*ast.BlockStatement)
 	}
+
 	return expression
 }

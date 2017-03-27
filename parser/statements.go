@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"go/token"
 	"monkey/ast"
+	"monkey/token"
 )
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
