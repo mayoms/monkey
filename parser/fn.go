@@ -7,7 +7,7 @@ import (
 
 func (p *Parser) parseFunctionLiteral() ast.Expression {
 
-	expression := &ast.FunctionLiteral{Token: p.curToken}
+	lit := &ast.FunctionLiteral{Token: p.curToken}
 
 	if !p.expectPeek(token.LPAREN) {
 		return nil
@@ -22,15 +22,17 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 			p.nextToken()
 		} else if p.curTokenIs(token.COMMA) {
 			p.nextToken()
+		} else {
+			return nil
 		}
 	}
-	expression.Parameters = params
+	lit.Parameters = params
 
 	if !p.expectPeek(token.LBRACE) {
 		return nil
 	}
 
-	expression.Body = p.parseBlockStatement().(*ast.BlockStatement)
+	lit.Body = p.parseBlockStatement().(*ast.BlockStatement)
 
-	return expression
+	return lit
 }
