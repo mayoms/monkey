@@ -381,6 +381,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 }
 
 func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
+	t.Logf("%v, %T", value, exp)
 	if ident, ok := exp.(*ast.Identifier); !ok {
 		t.Errorf("exp not *ast.Identifier. got=%T", exp)
 		return false
@@ -572,7 +573,7 @@ func TestCallExpressionParsing(t *testing.T) {
 	checkParserErrors(t, p)
 
 	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statemetns does not contain %d statements. got=%d", 1, len(program.Statements))
+		t.Fatalf("program.Statements does not contain %d statements. got=%d", 1, len(program.Statements))
 	}
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
@@ -584,16 +585,15 @@ func TestCallExpressionParsing(t *testing.T) {
 	if !ok {
 		t.Fatalf("function is not ast.CallExpression. got=%T", stmt.Expression)
 	}
-
 	if !testIdentifier(t, exp.Function, "add") {
 		return
 	}
 
 	if len(exp.Arguments) != 3 {
-		t.Fatalf("function literal parameters wrong. want 2, got=%d", len(exp.Arguments))
+		t.Fatalf("function literal parameters wrong. want 3, got=%d", len(exp.Arguments))
 	}
 
-	testLiteralExpression(t, exp.Arguments[0], "1")
+	testLiteralExpression(t, exp.Arguments[0], 1)
 	testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
 	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }

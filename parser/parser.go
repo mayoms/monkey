@@ -165,10 +165,14 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.nextToken()
 
 	exp := p.parseExpression(LOWEST)
-	if !p.expectPeek(token.RPAREN) {
+	if !p.peekTokenIs(token.RPAREN) {
+		if p.peekTokenIs(token.COMMA) {
+			p.nextToken()
+			return exp
+		}
 		return nil
 	}
-
+	p.nextToken()
 	return exp
 }
 
@@ -176,13 +180,32 @@ func (p *Parser) parseBlockStatement() ast.Expression {
 	expression := &ast.BlockStatement{Token: p.curToken}
 	expression.Statements = []ast.Statement{}
 	p.nextToken()
-	for p.curToken.Type != token.RBRACE {
+	for !p.curTokenIs(token.RBRACE) {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			expression.Statements = append(expression.Statements, stmt)
 		}
 		p.nextToken()
 	}
+	return expression
+}
+
+func (p *Parser) parseCallExpressions(f ast.Expression) ast.Expression {
+	expression := &ast.CallExpression{Token: p.curToken, Function: f}
+	args := []ast.Expression{}
+
+	p.nextToken()
+	for !p.curTokenIs(token.RPAREN) {
+		if p.curTokenIs(token.COMMA) {
+			p.nextToken()
+		}
+		exp := p.parseExpression(LOWEST)
+		if exp != nil {
+			args = append(args, exp)
+		}
+		p.nextToken()
+	}
+	expression.Arguments = args
 	return expression
 }
 

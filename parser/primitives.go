@@ -12,7 +12,12 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
-	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	identifier := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	if !p.peekTokenIs(token.LPAREN) {
+		return identifier
+	}
+	callexp := p.parseCallExpressions(identifier)
+	return callexp
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
