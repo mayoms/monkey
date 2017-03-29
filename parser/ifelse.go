@@ -19,8 +19,11 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	}
 
 	expression.Consequence = p.parseBlockStatement().(*ast.BlockStatement)
-	if p.expectPeek(token.ELSE) && p.expectPeek(token.LBRACE) {
-		expression.Alternative = p.parseBlockStatement().(*ast.BlockStatement)
+	if p.peekTokenIs(token.ELSE) {
+		p.nextToken()
+		if p.expectPeek(token.LBRACE) {
+			expression.Alternative = p.parseBlockStatement().(*ast.BlockStatement)
+		}
 	}
 
 	return expression
