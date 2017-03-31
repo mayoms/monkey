@@ -2,6 +2,7 @@ package repl
 
 import (
 	"io"
+	"monkey/eval"
 	"monkey/lexer"
 	"monkey/parser"
 	"os"
@@ -41,8 +42,8 @@ func Start(out io.Writer) {
 				printParserErrors(out, p.Errors())
 				continue
 			}
-
-			io.WriteString(out, program.String())
+			e := eval.Eval(program)
+			io.WriteString(out, e.Inspect())
 			io.WriteString(out, "\n")
 			l.AppendHistory(line)
 		}
