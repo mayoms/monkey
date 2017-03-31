@@ -51,6 +51,18 @@ func evalStatements(stmts []ast.Statement) object.Object {
 }
 
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntInfixExpression(operator, left, right)
+	case operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
+	}
+	return NULL
+}
+
+func evalIntInfixExpression(operator string, left object.Object, right object.Object) object.Object {
 	l, ok := left.(*object.Integer)
 	if !ok {
 		return NULL
@@ -69,6 +81,14 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 		return &object.Integer{Value: l.Value * r.Value}
 	case "/":
 		return &object.Integer{Value: l.Value / r.Value}
+	case ">":
+		return nativeBoolToBooleanObject(l.Value > r.Value)
+	case "<":
+		return nativeBoolToBooleanObject(l.Value < r.Value)
+	case "==":
+		return nativeBoolToBooleanObject(l.Value == r.Value)
+	case "!=":
+		return nativeBoolToBooleanObject(l.Value != r.Value)
 	}
 	return NULL
 }

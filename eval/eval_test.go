@@ -41,6 +41,25 @@ func TestEvalBooleanLiterals(t *testing.T) {
 	}
 }
 
+func TestEvalBooleanExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"true == true", true},
+		{"false == false", true},
+		{"true == false", false},
+		{"false != true", true},
+		{"(1 < 2) == true", true},
+		{"(2 < 1) == true", false},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
 func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 	result, ok := obj.(*object.Boolean)
 	if !ok {
