@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"fmt"
 	"monkey/ast"
 	"monkey/object"
 )
@@ -18,6 +17,11 @@ func Eval(node ast.Node) object.Object {
 		return evalStatements(node.Statements)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
+
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
@@ -25,8 +29,6 @@ func Eval(node ast.Node) object.Object {
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
-	default:
-		fmt.Printf("%T", node)
 	}
 	return nil
 }
@@ -48,10 +50,39 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	return results
 }
 
+func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	l, ok := left.(*object.Integer)
+	if !ok {
+		return NULL
+	}
+	r, ok := right.(*object.Integer)
+	if !ok {
+		return NULL
+	}
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value: l.Value + r.Value}
+	case "-":
+		return &object.Integer{Value: l.Value - r.Value}
+	case "*":
+		return &object.Integer{Value: l.Value * r.Value}
+	case "/":
+		return &object.Integer{Value: l.Value / r.Value}
+	}
+	return NULL
+}
+
 func evalPrefixExpression(operator string, right object.Object) object.Object {
 	switch operator {
 	case "!":
 		return evalBangOperatorExpression(right)
+	case "-":
+		if i, ok := right.(*object.Integer); ok {
+			i.Value = -i.Value
+			return right
+		}
+		return NULL
 	default:
 		return NULL
 	}
