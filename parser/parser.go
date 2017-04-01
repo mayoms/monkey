@@ -182,6 +182,9 @@ func (p *Parser) parseBlockStatement() ast.Expression {
 		if stmt != nil {
 			expression.Statements = append(expression.Statements, stmt)
 		}
+		if p.peekTokenIs(token.EOF) {
+			break
+		}
 		p.nextToken()
 	}
 	return expression
