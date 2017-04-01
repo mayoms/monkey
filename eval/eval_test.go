@@ -11,19 +11,24 @@ import (
 func TestReturnStatements(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected int64
+		expected interface{}
 	}{
 		{"return 10", 10},
 		{"return 10; 9;", 10},
 		{"return 2 * 5; 9;", 10},
 		{"9; return 2 * 5; 9;", 10},
 		{"if (10 > 1) { if (10 > 1) { return 10; } return 1; }", 10},
+		{"return;", nil},
 	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		fmt.Println(tt.input, evaluated)
-		testIntegerObject(t, evaluated, tt.expected)
+		if integer, ok := tt.expected.(int); ok {
+			testIntegerObject(t, evaluated, int64(integer))
+		} else {
+			testNullObject(t, evaluated)
+		}
 	}
 }
 

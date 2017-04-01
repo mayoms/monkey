@@ -19,7 +19,10 @@ func Eval(node ast.Node) object.Object {
 		return Eval(node.Expression)
 	case *ast.ReturnStatement:
 		value := Eval(node.ReturnValue)
-		return &object.ReturnValue{Value: value}
+		if value != nil {
+			return &object.ReturnValue{Value: value}
+		}
+		return NULL
 	case *ast.BlockStatement:
 		return evalBlockStatements(node.Statements)
 	case *ast.InfixExpression:
