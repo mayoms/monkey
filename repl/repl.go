@@ -2,7 +2,9 @@ package repl
 
 import (
 	"io"
+	"monkey/eval"
 	"monkey/lexer"
+	"monkey/object"
 	"monkey/parser"
 	"os"
 	"path/filepath"
@@ -24,7 +26,7 @@ func Start(out io.Writer) {
 		f.Close()
 	}
 
-	// env := object.NewEnvironment()
+	env := object.NewEnvironment()
 	for {
 		if line, err := l.Prompt(PROMPT); err == nil {
 			if line == "exit" {
@@ -34,18 +36,17 @@ func Start(out io.Writer) {
 				}
 				break
 			}
+			l.AppendHistory(line)
 			lex := lexer.New(line)
 			p := parser.New(lex)
-
 			program := p.ParseProgram()
 			if len(p.Errors()) != 0 {
 				printParserErrors(out, p.Errors())
 				continue
 			}
-			// e := eval.Eval(program, env)
-			io.WriteString(out, program.String())
+			e := eval.Eval(program, env)
+			io.WriteString(out, e.Inspect())
 			io.WriteString(out, "\n")
-			l.AppendHistory(line)
 		}
 	}
 }
