@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/object"
 )
@@ -28,9 +29,17 @@ func Eval(node ast.Node) object.Object {
 	case *ast.InfixExpression:
 		left := Eval(node.Left)
 		right := Eval(node.Right)
+		if left.Type() == object.ERROR_OBJ {
+			return left
+		} else if right.Type() == object.ERROR_OBJ {
+			return right
+		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
+		if right.Type() == object.ERROR_OBJ {
+			return right
+		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.IfExpression:
 		condition := Eval(node.Condition)
@@ -85,8 +94,11 @@ func evalProgram(program *ast.Program) object.Object {
 
 	for _, statement := range program.Statements {
 		results = Eval(statement)
-		if returnValue, ok := results.(*object.ReturnValue); ok {
-			return returnValue.Value
+		switch s := results.(type) {
+		case *object.ReturnValue:
+			return s.Value
+		case *object.Error:
+			return s
 		}
 	}
 
@@ -94,26 +106,28 @@ func evalProgram(program *ast.Program) object.Object {
 }
 
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	var errMsg string
 	switch {
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntInfixExpression(operator, left, right)
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
 		return nativeBoolToBooleanObject(left != right)
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntInfixExpression(operator, left, right)
+	case left.Type() != right.Type():
+		errMsg = fmt.Sprintf("type mismatch: %s %s %s", left.Type(), operator, right.Type())
+	case operator == "+":
+		errMsg = fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+	if errMsg != "" {
+		return &object.Error{Message: errMsg}
 	}
 	return NULL
 }
 
 func evalIntInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-	l, ok := left.(*object.Integer)
-	if !ok {
-		return NULL
-	}
-	r, ok := right.(*object.Integer)
-	if !ok {
-		return NULL
-	}
+	l := left.(*object.Integer)
+	r := right.(*object.Integer)
 
 	switch operator {
 	case "+":
@@ -128,10 +142,6 @@ func evalIntInfixExpression(operator string, left object.Object, right object.Ob
 		return nativeBoolToBooleanObject(l.Value > r.Value)
 	case "<":
 		return nativeBoolToBooleanObject(l.Value < r.Value)
-	case "==":
-		return nativeBoolToBooleanObject(l.Value == r.Value)
-	case "!=":
-		return nativeBoolToBooleanObject(l.Value != r.Value)
 	}
 	return NULL
 }
@@ -145,7 +155,8 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 			i.Value = -i.Value
 			return right
 		}
-		return NULL
+		msg := fmt.Sprintf("unknown operator: %s%s", operator, right.Type())
+		return &object.Error{Message: msg}
 	default:
 		return NULL
 	}
