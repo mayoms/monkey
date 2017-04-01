@@ -8,6 +8,28 @@ import (
 	"testing"
 )
 
+func TestFunctionObject(t *testing.T) {
+	input := "fn(x) { x + 2 };"
+
+	evaluated := testEval(input)
+
+	fn, ok := evaluated.(*object.Function)
+	if !ok {
+		t.Fatalf("object is not Function. got=%T (%+v)", evaluated, evaluated)
+	}
+	if len(fn.Literal.Parameters) != 1 {
+		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Literal.Parameters)
+	}
+	if fn.Literal.Parameters[0].String() != "x" {
+		t.Fatalf("parameter is not 'x'. got=%q", fn.Literal.Parameters[0])
+	}
+
+	expectedBody := "(x + 2)"
+	if fn.Literal.Body.String() != expectedBody {
+		t.Fatalf("body is not '(x + 2). got=%q", fn.Literal.Body)
+	}
+}
+
 func TestLetStatements(t *testing.T) {
 	test := []struct {
 		input    string

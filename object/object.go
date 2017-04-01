@@ -1,6 +1,9 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+	"monkey/ast"
+)
 
 type ObjectType string
 
@@ -10,12 +13,21 @@ const (
 	NULL_OBJ         = "NULL"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
 	ERROR_OBJ        = "ERROR"
+	FUNCTION_OBJ     = "FUNCTION"
 )
 
 type Object interface {
 	Type() ObjectType
 	Inspect() string
 }
+
+type Function struct {
+	Literal *ast.FunctionLiteral
+	Env     *Environment
+}
+
+func (f *Function) Inspect() string  { return "fn" + f.Literal.String() }
+func (r *Function) Type() ObjectType { return FUNCTION_OBJ }
 
 type ReturnValue struct{ Value Object }
 
