@@ -16,7 +16,7 @@ func TestFunctionApplication(t *testing.T) {
 		{"let identity = fn(x) { return x; }; identity(5);", 5},
 		{"let double = fn(x) { x * 2; }; double(5);", 10},
 		{"let add = fn(x, y) { x + y; }; add(5, 5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
 		{"fn(x) { x; }(5)", 5},
 	}
 
@@ -133,6 +133,7 @@ func TestReturnStatements(t *testing.T) {
 		{"return 2 * 5; 9;", 10},
 		{"9; return 2 * 5; 9;", 10},
 		{"if (10 > 1) { if (10 > 1) { return 10; } return 1; }", 10},
+		{"let x = 5; return x;", 5},
 		{"return;", nil},
 	}
 
@@ -176,6 +177,7 @@ func TestIfElseExpressions(t *testing.T) {
 		{"if (1 > 2) {10}", nil},
 		{"if (1 > 2) {10} else {20}", 20},
 		{"if (1 < 2) {10} else {20}", 10},
+		{"let x = 5;if(x == 5) { return;}", nil},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -221,6 +223,11 @@ func TestEvalBooleanExpressions(t *testing.T) {
 		{"false != true", true},
 		{"(1 < 2) == true", true},
 		{"(2 < 1) == true", false},
+		{"let x = 5;x == 5", true},
+		{"let x = 5; x != 5", false},
+		{"let x = 5; x > 5", false},
+		{"let x = 4; x < 5", true},
+		{"let x = 4; (x + 5) > 5", true},
 	}
 
 	for _, tt := range tests {

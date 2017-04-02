@@ -13,7 +13,6 @@ var (
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
-
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, env)
@@ -130,15 +129,15 @@ func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
 	var errMsg string
 	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntInfixExpression(operator, left, right)
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
 		return nativeBoolToBooleanObject(left != right)
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntInfixExpression(operator, left, right)
 	case left.Type() != right.Type():
 		errMsg = fmt.Sprintf("type mismatch: %s %s %s", left.Type(), operator, right.Type())
-	case operator == "+":
+	default:
 		errMsg = fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 	if errMsg != "" {
@@ -164,6 +163,10 @@ func evalIntInfixExpression(operator string, left object.Object, right object.Ob
 		return nativeBoolToBooleanObject(l.Value > r.Value)
 	case "<":
 		return nativeBoolToBooleanObject(l.Value < r.Value)
+	case "==":
+		return nativeBoolToBooleanObject(l.Value == r.Value)
+	case "!=":
+		return nativeBoolToBooleanObject(l.Value != r.Value)
 	}
 	return NULL
 }
