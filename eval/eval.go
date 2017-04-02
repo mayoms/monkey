@@ -16,6 +16,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, env)
+	case *ast.CallExpression:
+		return evalFunctionCall(node, env)
 	case *ast.FunctionLiteral:
 		return &object.Function{Literal: node, Env: env}
 	case *ast.LetStatement:
@@ -186,4 +188,18 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	default:
 		return FALSE
 	}
+}
+
+func evalFunctionCall(call *ast.CallExpression, env *object.Environment) object.Object {
+	v, ok := env.Get(call.Function.String())
+	if !ok {
+		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
+	}
+	fn := v.(*object.Function)
+	fn.Env = object.NewEnvironment()
+	for i, v := range fn.Literal.Parameters {
+		fn.Env.Set(v.String(), Eval(call.Arguments[i], env))
+	}
+	val := Eval(fn.Literal.Body, fn.Env)
+	return val
 }

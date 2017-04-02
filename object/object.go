@@ -26,7 +26,7 @@ type Function struct {
 	Env     *Environment
 }
 
-func (f *Function) Inspect() string  { return "fn" + f.Literal.String() }
+func (f *Function) Inspect() string  { return f.Literal.String() }
 func (r *Function) Type() ObjectType { return FUNCTION_OBJ }
 
 type ReturnValue struct{ Value Object }
