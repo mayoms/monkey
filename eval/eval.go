@@ -13,16 +13,18 @@ var (
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
+
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, env)
 	case *ast.CallExpression:
-		if fn, ok := env.Get(node.Function.String()); ok {
-			f_env := object.NewEnvironment()
-			f_env.Set(node.Function.String(), fn)
-			return evalFunctionCall(node, f_env)
+		f_env := object.NewEnvironment()
+		fn, ok := env.Get(node.Function.String())
+		if !ok {
+			fn = &object.Function{Literal: node.Function.(*ast.FunctionLiteral), Env: env}
 		}
-		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", node.Function.String())}
+		f_env.Set(node.Function.String(), fn)
+		return evalFunctionCall(node, f_env)
 	case *ast.FunctionLiteral:
 		return &object.Function{Literal: node, Env: env}
 	case *ast.LetStatement:
@@ -200,8 +202,11 @@ func evalFunctionCall(call *ast.CallExpression, env *object.Environment) object.
 	fn := v.(*object.Function)
 	fn.Env = env
 	for i, v := range fn.Literal.Parameters {
-		env.Set(v.String(), Eval(call.Arguments[i], fn.Env))
+		value := Eval(call.Arguments[i], fn.Env)
+		if value.Type() == object.RETURN_VALUE_OBJ {
+			value = value.(*object.ReturnValue).Value
+		}
+		env.Set(v.String(), value)
 	}
-	val := Eval(fn.Literal.Body, env)
-	return val
+	return Eval(fn.Literal.Body, env)
 }

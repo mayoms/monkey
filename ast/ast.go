@@ -9,6 +9,7 @@ type Node interface {
 	TokenLiteral() string
 	String() string
 }
+
 type Program struct {
 	Statements []Statement
 }
