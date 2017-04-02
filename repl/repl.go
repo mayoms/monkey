@@ -44,6 +44,8 @@ func Start(out io.Writer) {
 				printParserErrors(out, p.Errors())
 				continue
 			}
+			io.WriteString(out, program.String())
+			io.WriteString(out, "\n")
 			e := eval.Eval(program, env)
 			io.WriteString(out, e.Inspect())
 			io.WriteString(out, "\n")

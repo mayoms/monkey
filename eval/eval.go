@@ -17,7 +17,12 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.Program:
 		return evalProgram(node, env)
 	case *ast.CallExpression:
-		return evalFunctionCall(node, env)
+		if fn, ok := env.Get(node.Function.String()); ok {
+			f_env := object.NewEnvironment()
+			f_env.Set(node.Function.String(), fn)
+			return evalFunctionCall(node, f_env)
+		}
+		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", node.Function.String())}
 	case *ast.FunctionLiteral:
 		return &object.Function{Literal: node, Env: env}
 	case *ast.LetStatement:
@@ -191,15 +196,12 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 }
 
 func evalFunctionCall(call *ast.CallExpression, env *object.Environment) object.Object {
-	v, ok := env.Get(call.Function.String())
-	if !ok {
-		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
-	}
+	v, _ := env.Get(call.Function.String())
 	fn := v.(*object.Function)
-	fn.Env = object.NewEnvironment()
+	fn.Env = env
 	for i, v := range fn.Literal.Parameters {
-		fn.Env.Set(v.String(), Eval(call.Arguments[i], env))
+		env.Set(v.String(), Eval(call.Arguments[i], fn.Env))
 	}
-	val := Eval(fn.Literal.Body, fn.Env)
+	val := Eval(fn.Literal.Body, env)
 	return val
 }

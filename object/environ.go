@@ -6,6 +6,7 @@ func NewEnvironment() *Environment {
 }
 
 type Environment struct {
+	num   int
 	store map[string]Object
 }
 
