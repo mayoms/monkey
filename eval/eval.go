@@ -20,8 +20,10 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 		f_scope := object.NewScope(scope)
 		fn, ok := scope.Get(node.Function.String())
 		if !ok {
-			fn = &object.Function{Literal: node.Function.(*ast.FunctionLiteral), Scope: scope}
-			scope.Set(node.Function.String(), fn)
+			if f, ok := node.Function.(*ast.FunctionLiteral); ok {
+				fn = &object.Function{Literal: f, Scope: scope}
+				scope.Set(node.Function.String(), fn)
+			}
 		}
 		return evalFunctionCall(node, f_scope)
 	case *ast.FunctionLiteral:
