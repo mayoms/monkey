@@ -20,12 +20,7 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 		f_scope := object.NewScope(scope)
 		fn, ok := scope.Get(node.Function.String())
 		if !ok {
-			switch f := node.Function.(type) {
-			case *ast.CallExpression:
-				fn = &object.Function{Literal: f.Function.(*ast.FunctionLiteral), Scope: scope}
-			case *ast.FunctionLiteral:
-				fn = &object.Function{Literal: f, Scope: scope}
-			}
+			fn = &object.Function{Literal: node.Function.(*ast.FunctionLiteral), Scope: scope}
 			scope.Set(node.Function.String(), fn)
 		}
 		return evalFunctionCall(node, f_scope)
