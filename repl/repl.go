@@ -26,7 +26,7 @@ func Start(out io.Writer) {
 		f.Close()
 	}
 
-	env := object.NewEnvironment()
+	scope := object.NewScope(nil)
 	for {
 		if line, err := l.Prompt(PROMPT); err == nil {
 			if line == "exit" {
@@ -44,9 +44,7 @@ func Start(out io.Writer) {
 				printParserErrors(out, p.Errors())
 				continue
 			}
-			io.WriteString(out, program.String())
-			io.WriteString(out, "\n")
-			e := eval.Eval(program, env)
+			e := eval.Eval(program, scope)
 			io.WriteString(out, e.Inspect())
 			io.WriteString(out, "\n")
 		}

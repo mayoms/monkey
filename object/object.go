@@ -23,7 +23,7 @@ type Object interface {
 
 type Function struct {
 	Literal *ast.FunctionLiteral
-	Env     *Environment
+	Scope   *Scope
 }
 
 func (f *Function) Inspect() string  { return f.Literal.String() }

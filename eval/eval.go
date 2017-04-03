@@ -12,44 +12,49 @@ var (
 	NULL  = &object.Null{}
 )
 
-func Eval(node ast.Node, env *object.Environment) object.Object {
+func Eval(node ast.Node, scope *object.Scope) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalProgram(node, env)
+		return evalProgram(node, scope)
 	case *ast.CallExpression:
-		f_env := object.NewEnvironment()
-		fn, ok := env.Get(node.Function.String())
+		f_scope := object.NewScope(scope)
+		fn, ok := scope.Get(node.Function.String())
 		if !ok {
-			fn = &object.Function{Literal: node.Function.(*ast.FunctionLiteral), Env: env}
+			switch f := node.Function.(type) {
+			case *ast.CallExpression:
+				fn = &object.Function{Literal: f.Function.(*ast.FunctionLiteral), Scope: scope}
+			case *ast.FunctionLiteral:
+				fn = &object.Function{Literal: f, Scope: scope}
+			}
 		}
-		f_env.Set(node.Function.String(), fn)
-		return evalFunctionCall(node, f_env)
+		scope.Set(node.Function.String(), fn)
+		return evalFunctionCall(node, f_scope)
 	case *ast.FunctionLiteral:
-		return &object.Function{Literal: node, Env: env}
+		return &object.Function{Literal: node, Scope: scope}
 	case *ast.LetStatement:
-		val := Eval(node.Value, env)
+		val := Eval(node.Value, scope)
 		if val.Type() == object.ERROR_OBJ {
 			return val
 		}
-		return env.Set(node.Name.String(), val)
+		return scope.Set(node.Name.String(), val)
 	case *ast.Identifier:
-		if val, ok := env.Get(node.String()); ok {
+		if val, ok := scope.Get(node.String()); ok {
 			return val
 		}
 		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", node.String())}
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression, env)
+		return Eval(node.Expression, scope)
 	case *ast.ReturnStatement:
-		value := Eval(node.ReturnValue, env)
+		value := Eval(node.ReturnValue, scope)
 		if value != nil {
 			return &object.ReturnValue{Value: value}
 		}
 		return NULL
 	case *ast.BlockStatement:
-		return evalBlockStatements(node.Statements, env)
+		return evalBlockStatements(node.Statements, scope)
 	case *ast.InfixExpression:
-		left := Eval(node.Left, env)
-		right := Eval(node.Right, env)
+		left := Eval(node.Left, scope)
+		right := Eval(node.Right, scope)
 		if left.Type() == object.ERROR_OBJ {
 			return left
 		} else if right.Type() == object.ERROR_OBJ {
@@ -57,17 +62,17 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PrefixExpression:
-		right := Eval(node.Right, env)
+		right := Eval(node.Right, scope)
 		if right.Type() == object.ERROR_OBJ {
 			return right
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.IfExpression:
-		condition := Eval(node.Condition, env)
+		condition := Eval(node.Condition, scope)
 		if isTrue(condition) {
-			return evalBlockStatements(node.Consequence.Statements, env)
+			return evalBlockStatements(node.Consequence.Statements, scope)
 		} else if node.Alternative != nil {
-			return evalBlockStatements(node.Alternative.Statements, env)
+			return evalBlockStatements(node.Alternative.Statements, scope)
 		}
 		return NULL
 	case *ast.IntegerLiteral:
@@ -98,11 +103,11 @@ func nativeBoolToBooleanObject(input bool) *object.Boolean {
 	return FALSE
 }
 
-func evalBlockStatements(block []ast.Statement, env *object.Environment) object.Object {
+func evalBlockStatements(block []ast.Statement, scope *object.Scope) object.Object {
 	var results object.Object
 
 	for _, statement := range block {
-		results = Eval(statement, env)
+		results = Eval(statement, scope)
 		if results != nil && results.Type() == object.RETURN_VALUE_OBJ {
 			return results
 		}
@@ -110,11 +115,11 @@ func evalBlockStatements(block []ast.Statement, env *object.Environment) object.
 	return results
 }
 
-func evalProgram(program *ast.Program, env *object.Environment) object.Object {
+func evalProgram(program *ast.Program, scope *object.Scope) object.Object {
 	var results object.Object
 
 	for _, statement := range program.Statements {
-		results = Eval(statement, env)
+		results = Eval(statement, scope)
 		switch s := results.(type) {
 		case *object.ReturnValue:
 			return s.Value
@@ -127,6 +132,12 @@ func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 }
 
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+
+	if r, ok := left.(*object.ReturnValue); ok {
+		left = r.Value
+	} else if r, ok := right.(*object.ReturnValue); ok {
+		right = r.Value
+	}
 	var errMsg string
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
@@ -200,16 +211,19 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	}
 }
 
-func evalFunctionCall(call *ast.CallExpression, env *object.Environment) object.Object {
-	v, _ := env.Get(call.Function.String())
+func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Object {
+	v, ok := scope.Get(call.Function.String())
+	if !ok {
+		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
+	}
 	fn := v.(*object.Function)
-	fn.Env = env
+	fn.Scope = scope
 	for i, v := range fn.Literal.Parameters {
-		value := Eval(call.Arguments[i], fn.Env)
+		value := Eval(call.Arguments[i], fn.Scope)
 		if value.Type() == object.RETURN_VALUE_OBJ {
 			value = value.(*object.ReturnValue).Value
 		}
-		env.Set(v.String(), value)
+		scope.Set(v.String(), value)
 	}
-	return Eval(fn.Literal.Body, env)
+	return Eval(fn.Literal.Body, scope)
 }

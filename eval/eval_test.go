@@ -7,6 +7,23 @@ import (
 	"testing"
 )
 
+func TestEnclosingEnvironments(t *testing.T) {
+	input := `
+let first = 10;
+let second = 10;
+let third = 10;
+
+let ourFunction = fn(first) {
+  let second = 20;
+
+  first + second + third;
+};
+
+ourFunction(20) + first + second;`
+
+	testIntegerObject(t, testEval(input), 70)
+}
+
 func TestFunctionApplication(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -280,10 +297,10 @@ func TestEvalIntegerExpression(t *testing.T) {
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
-	e := object.NewEnvironment()
+	s := object.NewScope(nil)
 	program := p.ParseProgram()
 
-	return Eval(program, e)
+	return Eval(program, s)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
