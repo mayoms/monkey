@@ -8,8 +8,17 @@ import (
 )
 
 func TestStringLiteral(t *testing.T) {
-	input := `"hello, world"`
-	testStringObject(t, testEval(input), "hello, world")
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"Hello, World!"`, "Hello, World!"},
+		{`"Hello," + " World!"`, "Hello, World!"},
+	}
+
+	for _, tt := range tests {
+		testStringObject(t, testEval(tt.input), tt.expected)
+	}
 }
 
 func TestEnclosingEnvironments(t *testing.T) {
@@ -251,6 +260,12 @@ func TestEvalBooleanExpressions(t *testing.T) {
 		{"let x = 5; x > 5", false},
 		{"let x = 4; x < 5", true},
 		{"let x = 4; (x + 5) > 5", true},
+		{`"abc" == "abc"`, true},
+		{`"abc" == "bc"`, false},
+		{`"abc" != "abc"`, false},
+		{`"abc" != "bc"`, true},
+		{`let x = "abc"; x == "abc"`, true},
+		{`let x = fn(){ "abc" }; x() == "abc"`, true},
 	}
 
 	for _, tt := range tests {
