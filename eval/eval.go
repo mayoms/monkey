@@ -162,6 +162,7 @@ func evalStringInfixExpression(operator string, left object.Object, right object
 	case "!=":
 		return nativeBoolToBooleanObject(l.Value != r.Value)
 	case "+":
+		// TODO: "Hello, + "World" causes some sort of infinite loop
 		return &object.String{Value: l.Value + r.Value}
 	}
 	return &object.Error{Message: fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, left.Type())}
@@ -228,6 +229,7 @@ func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Obje
 	}
 	fn := f.(*object.Function)
 	fn.Scope = scope
+	// TODO: If the wrong number of params is passed a panic occurs
 	for i, v := range fn.Literal.Parameters {
 		value := Eval(call.Arguments[i], fn.Scope)
 		scope.Set(v.String(), value)

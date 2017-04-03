@@ -13,7 +13,7 @@ func TestStringLiteral(t *testing.T) {
 		expected string
 	}{
 		{`"Hello, World!"`, "Hello, World!"},
-		{`"Hello," + " World!"`, "Hello, World!"},
+		{`"Hello," + " " + "World!"`, "Hello, World!"},
 	}
 
 	for _, tt := range tests {
