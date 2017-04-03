@@ -140,6 +140,12 @@ if (10 > 1) {
 			"unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{"foobar", "unknown identifier: foobar"},
+		{`"abc" + 2`, "type mismatch: STRING + INTEGER"},
+		{`"abc" - "abc"`, "unknown operator: STRING - STRING"},
+		{`"abc" * "abc"`, "unknown operator: STRING * STRING"},
+		{`"abc" / "abc"`, "unknown operator: STRING / STRING"},
+		{`"abc" > "abc"`, "unknown operator: STRING > STRING"},
+		{`"abc" < "abc"`, "unknown operator: STRING < STRING"},
 	}
 
 	for _, tt := range tests {
