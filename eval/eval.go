@@ -206,19 +206,19 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 }
 
 func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Object {
-	v, ok := scope.Get(call.Function.String())
+	f, ok := scope.Get(call.Function.String())
 	if !ok {
 		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
 	}
-	fn := v.(*object.Function)
+	fn := f.(*object.Function)
 	fn.Scope = scope
 	for i, v := range fn.Literal.Parameters {
 		value := Eval(call.Arguments[i], fn.Scope)
 		scope.Set(v.String(), value)
 	}
-	v = Eval(fn.Literal.Body, scope)
-	if obj, ok := v.(*object.ReturnValue); ok {
+	r := Eval(fn.Literal.Body, scope)
+	if obj, ok := r.(*object.ReturnValue); ok {
 		return obj.Value
 	}
-	return v
+	return r
 }
