@@ -132,12 +132,6 @@ func evalProgram(program *ast.Program, scope *object.Scope) object.Object {
 }
 
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-
-	if r, ok := left.(*object.ReturnValue); ok {
-		left = r.Value
-	} else if r, ok := right.(*object.ReturnValue); ok {
-		right = r.Value
-	}
 	var errMsg string
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
@@ -225,5 +219,9 @@ func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Obje
 		}
 		scope.Set(v.String(), value)
 	}
-	return Eval(fn.Literal.Body, scope)
+	v = Eval(fn.Literal.Body, scope)
+	if obj, ok := v.(*object.ReturnValue); ok {
+		return obj.Value
+	}
+	return v
 }

@@ -35,6 +35,7 @@ func TestFunctionApplication(t *testing.T) {
 		{"let add = fn(x, y) { x + y; }; add(5, 5);", 10},
 		{"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
 		{"fn(x) { x; }(5)", 5},
+		{"let fact = fn(n) { if(n==1) { return n } else { return n * fact(n-1) } }; fact(5);", 120},
 	}
 
 	for _, tt := range tests {
