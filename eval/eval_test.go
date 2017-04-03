@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+func TestStringLiteral(t *testing.T) {
+	input := `"hello, world"`
+	testStringObject(t, testEval(input), "hello, world")
+}
+
 func TestEnclosingEnvironments(t *testing.T) {
 	input := `
 let first = 10;
@@ -312,6 +317,19 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func testStringObject(t *testing.T, obj object.Object, expected string) bool {
+	result, ok := obj.(*object.String)
+	if !ok {
+		t.Errorf("object is not String. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%s, want=%s", result.Value, expected)
 		return false
 	}
 	return true

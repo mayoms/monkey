@@ -89,10 +89,8 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readNumber()
 			return tok
 		} else if isQuote(l.ch) {
-			l.readChar()
 			tok.Type = token.STRING
 			tok.Literal = l.readString()
-			l.readChar()
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
@@ -106,11 +104,16 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 }
 
 func (l *Lexer) readString() string {
-	position := l.position
-	for !isQuote(l.ch) {
+	start := l.position + 1
+	for {
 		l.readChar()
+		if isQuote(l.ch) {
+			l.readChar()
+			break
+		}
 	}
-	return l.input[position:l.position]
+
+	return l.input[start : l.position-1]
 }
 
 func (l *Lexer) readIdentifier() string {
