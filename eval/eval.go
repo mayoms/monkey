@@ -26,8 +26,8 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 			case *ast.FunctionLiteral:
 				fn = &object.Function{Literal: f, Scope: scope}
 			}
+			scope.Set(node.Function.String(), fn)
 		}
-		scope.Set(node.Function.String(), fn)
 		return evalFunctionCall(node, f_scope)
 	case *ast.FunctionLiteral:
 		return &object.Function{Literal: node, Scope: scope}
