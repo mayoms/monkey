@@ -214,9 +214,6 @@ func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Obje
 	fn.Scope = scope
 	for i, v := range fn.Literal.Parameters {
 		value := Eval(call.Arguments[i], fn.Scope)
-		if value.Type() == object.RETURN_VALUE_OBJ {
-			value = value.(*object.ReturnValue).Value
-		}
 		scope.Set(v.String(), value)
 	}
 	v = Eval(fn.Literal.Body, scope)
