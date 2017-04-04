@@ -83,10 +83,33 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 		return &object.String{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+	case *ast.IndexExpression:
+		left := Eval(node.Left, scope)
+		index := Eval(node.Index, scope)
+		return evalIndexExpression(left, index)
 	}
 	return nil
 }
 
+func evalIndexExpression(left, index object.Object) object.Object {
+	var errMsg string
+	if left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ {
+		array := left.(*object.Array)
+		idx := index.(*object.Integer)
+
+		length := int64(len(array.Members) - 1)
+		if idx.Value > length || idx.Value < -length {
+			errMsg = fmt.Sprintf("index %d out of range", idx.Value)
+			return &object.Error{Message: errMsg}
+		}
+		if idx.Value < 0 {
+			return array.Members[(length+1)+idx.Value]
+		}
+		return array.Members[idx.Value]
+	}
+	errMsg = fmt.Sprintf("index operator not supported: %s", left.Type())
+	return &object.Error{Message: errMsg}
+}
 func isTrue(obj object.Object) bool {
 	switch obj {
 	case TRUE:
@@ -228,7 +251,7 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 }
 
 func evalArrayLiteral(a *ast.ArrayLiteral, scope *object.Scope) object.Object {
-	return &object.Array{Value: a.String(), Members: evalArgs(a.Members, scope)}
+	return &object.Array{Members: evalArgs(a.Members, scope)}
 }
 
 func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Object {

@@ -44,7 +44,6 @@ func (f *Function) Inspect() string  { return f.Literal.String() }
 func (r *Function) Type() ObjectType { return FUNCTION_OBJ }
 
 type Array struct {
-	Value   string
 	Members []Object
 }
 
@@ -57,7 +56,6 @@ func (a *Array) Inspect() string {
 	out.WriteString("[")
 	out.WriteString(strings.Join(members, ", "))
 	out.WriteString("]")
-	out.WriteString("\n")
 
 	return out.String()
 }
