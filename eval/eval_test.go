@@ -7,6 +7,22 @@ import (
 	"testing"
 )
 
+func TestArrayLiterals(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3]"
+
+	evaluated := testEval(input)
+	results, ok := evaluated.(*object.Array)
+	if !ok {
+		t.Fatalf("object is not Array. got=%T", evaluated)
+	}
+	if len(results.Members) != 3 {
+		t.Fatalf("array has wrong number of elements. got=%d", len(results.Members))
+	}
+	testIntegerObject(t, results.Members[0], 1)
+	testIntegerObject(t, results.Members[1], 4)
+	testIntegerObject(t, results.Members[2], 6)
+}
+
 func TestBuiltinFunction(t *testing.T) {
 	tests := []struct {
 		input    string
