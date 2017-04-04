@@ -1,8 +1,10 @@
 package object
 
 import (
+	"bytes"
 	"fmt"
 	"monkey/ast"
+	"strings"
 )
 
 type ObjectType string
@@ -46,7 +48,19 @@ type Array struct {
 	Members []Object
 }
 
-func (a *Array) Inspect() string  { return a.Value }
+func (a *Array) Inspect() string {
+	var out bytes.Buffer
+	members := []string{}
+	for _, m := range a.Members {
+		members = append(members, m.Inspect())
+	}
+	out.WriteString("[")
+	out.WriteString(strings.Join(members, ", "))
+	out.WriteString("]")
+	out.WriteString("\n")
+
+	return out.String()
+}
 func (a *Array) Type() ObjectType { return ARRAY_OBJ }
 
 type ReturnValue struct{ Value Object }
