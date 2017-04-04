@@ -15,12 +15,22 @@ const (
 	ERROR_OBJ        = "ERROR"
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
+	BUILTIN_OBJ      = "BUILTIN"
 )
 
 type Object interface {
 	Type() ObjectType
 	Inspect() string
 }
+
+type BuiltinFunc func(args ...Object) Object
+
+type Builtin struct {
+	Fn BuiltinFunc
+}
+
+func (b *Builtin) Inspect() string  { return "builtin function" }
+func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 
 type Function struct {
 	Literal *ast.FunctionLiteral

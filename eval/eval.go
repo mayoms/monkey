@@ -24,6 +24,9 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 				fn = &object.Function{Literal: f, Scope: scope}
 				scope.Set(node.Function.String(), fn)
 			}
+			if builtin, ok := builtins[node.Function.String()]; ok {
+				return builtin.Fn(evalArgs(node.Arguments, scope)...)
+			}
 		}
 		return evalFunctionCall(node, f_scope)
 	case *ast.FunctionLiteral:
@@ -229,14 +232,22 @@ func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Obje
 	}
 	fn := f.(*object.Function)
 	fn.Scope = scope
+	args := evalArgs(call.Arguments, scope)
 	// TODO: If the wrong number of params is passed a panic occurs
 	for i, v := range fn.Literal.Parameters {
-		value := Eval(call.Arguments[i], fn.Scope)
-		scope.Set(v.String(), value)
+		scope.Set(v.String(), args[i])
 	}
 	r := Eval(fn.Literal.Body, scope)
 	if obj, ok := r.(*object.ReturnValue); ok {
 		return obj.Value
 	}
 	return r
+}
+
+func evalArgs(args []ast.Expression, scope *object.Scope) []object.Object {
+	e := []object.Object{}
+	for _, v := range args {
+		e = append(e, Eval(v, scope))
+	}
+	return e
 }
