@@ -95,6 +95,7 @@ func TestBuiltinFunction(t *testing.T) {
 	}{
 		{`len("")`, 0},
 		{`len("four")`, 4},
+		{`len([1, 3, 5])`, 3},
 		{`len("one", "two")`, "too many arguments. expected=1 got=2"},
 		{`len(1)`, "unsupported type: *object.Integer"},
 	}
