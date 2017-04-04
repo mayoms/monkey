@@ -8,6 +8,25 @@ import (
 	"testing"
 )
 
+func TestArrayExpression(t *testing.T) {
+	input := "[1, 2 * 3, 2 + 2]"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	array, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("exp not ast.ArrayLiteral. got=%T", program.Statements[0])
+	}
+	if len(array.Members) != 3 {
+		t.Fatalf("array length not 3. got=%d", len(array.Members))
+	}
+	testIntegerLiteral(t, array.Members[0], 1)
+	testInfixExpression(t, array.Members[1], 2, "*", 3)
+	testInfixExpression(t, array.Members[2], 2, "+", 2)
+}
+
 func TestStringLiteralExpression(t *testing.T) {
 	input := `"hello, world";`
 

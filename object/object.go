@@ -16,6 +16,7 @@ const (
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN"
+	ARRAY_OBJ        = "ARRAY_OBJ"
 )
 
 type Object interface {
@@ -39,6 +40,14 @@ type Function struct {
 
 func (f *Function) Inspect() string  { return f.Literal.String() }
 func (r *Function) Type() ObjectType { return FUNCTION_OBJ }
+
+type Array struct {
+	Value   string
+	Members []Object
+}
+
+func (a *Array) Inspect() string  { return a.Value }
+func (a *Array) Type() ObjectType { return ARRAY_OBJ }
 
 type ReturnValue struct{ Value Object }
 

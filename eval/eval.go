@@ -29,6 +29,8 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 			}
 		}
 		return evalFunctionCall(node, f_scope)
+	case *ast.ArrayLiteral:
+		return evalArrayLiteral(node, scope)
 	case *ast.FunctionLiteral:
 		return &object.Function{Literal: node, Scope: scope}
 	case *ast.LetStatement:
@@ -223,6 +225,10 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	default:
 		return FALSE
 	}
+}
+
+func evalArrayLiteral(a *ast.ArrayLiteral, scope *object.Scope) object.Object {
+	return &object.Array{Value: a.String(), Members: evalArgs(a.Members, scope)}
 }
 
 func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Object {

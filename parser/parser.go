@@ -71,6 +71,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteralExpression)
+	p.registerPrefix(token.LBRACKET, p.parseArrayExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -210,10 +211,34 @@ func (p *Parser) parseCallExpressions(f ast.Expression) ast.Expression {
 		args = append(args, p.parseExpression(LOWEST))
 	}
 	if !p.expectPeek(token.RPAREN) {
-		expression.Arguments = nil
+		expression.Arguments = nil // TODO: evaluate this action. perhaps return nil or just expression?
 	}
 	expression.Arguments = args
 	return expression
+}
+
+func (p *Parser) parseArrayExpression() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken}
+	members := []ast.Expression{}
+
+	if p.peekTokenIs(token.RBRACKET) {
+		array.Members = members
+		p.nextToken()
+		return array
+	}
+	p.nextToken()
+	members = append(members, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		members = append(members, p.parseExpression(LOWEST))
+	}
+	if !p.expectPeek(token.RBRACKET) {
+		array.Members = nil // TODO: per above note, evaluate this
+	}
+	array.Members = members
+	return array
 }
 
 func (p *Parser) parseStringLiteralExpression() ast.Expression {
