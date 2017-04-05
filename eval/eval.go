@@ -16,6 +16,8 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, scope)
+	case *ast.MethodCallExpression:
+		return evalMethodCallExpression(node, scope)
 	case *ast.CallExpression:
 		f_scope := object.NewScope(scope)
 		fn, ok := scope.Get(node.Function.String())
@@ -24,7 +26,7 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 				fn = &object.Function{Literal: f, Scope: scope}
 				scope.Set(node.Function.String(), fn)
 			}
-			if builtin, ok := builtins[node.Function.String()]; ok {
+			if builtin, ok := object.Builtins[node.Function.String()]; ok {
 				return builtin.Fn(evalArgs(node.Arguments, scope)...)
 			}
 		}
@@ -252,6 +254,16 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 
 func evalArrayLiteral(a *ast.ArrayLiteral, scope *object.Scope) object.Object {
 	return &object.Array{Members: evalArgs(a.Members, scope)}
+}
+
+func evalMethodCallExpression(call *ast.MethodCallExpression, scope *object.Scope) object.Object {
+	obj := Eval(call.Object, scope)
+	method, ok := call.Call.(*ast.CallExpression)
+	if !ok {
+		return &object.Error{Message: fmt.Sprintf("Method call not *ast.CallExpression. got=%T", call.Call)}
+	}
+	args := evalArgs(method.Arguments, scope)
+	return obj.CallMethod(method.Function.String(), args)
 }
 
 func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Object {

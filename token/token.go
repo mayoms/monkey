@@ -27,6 +27,7 @@ const (
 	RBRACE   = "}"
 	LBRACKET = "["
 	RBRACKET = "]"
+	DOT      = "."
 
 	FUNCTION = "FUNCTION"
 	LET      = "LET"

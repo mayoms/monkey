@@ -15,6 +15,7 @@ const (
 	SUM
 	PRODUCT
 	PREFIX
+	METHOD
 	CALL
 	INDEX
 )
@@ -30,6 +31,7 @@ var precedences = map[token.TokenType]int{
 	token.SLASH:    PRODUCT,
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
+	token.DOT:      METHOD,
 }
 
 type Parser struct {
@@ -86,7 +88,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
-
+	p.registerInfix(token.DOT, p.parseMethodCallExpressions)
 	p.nextToken()
 	p.nextToken()
 
@@ -193,6 +195,17 @@ func (p *Parser) parseBlockStatement() ast.Expression {
 		p.nextToken()
 	}
 	return expression
+}
+
+func (p *Parser) parseMethodCallExpressions(obj ast.Expression) ast.Expression {
+	methodCall := &ast.MethodCallExpression{Token: p.curToken, Object: obj}
+	if !p.curTokenIs(token.DOT) {
+		return methodCall
+	}
+	p.nextToken()
+	methodCall.Call = p.parseExpression(LOWEST)
+	return methodCall
+
 }
 
 func (p *Parser) parseCallExpressions(f ast.Expression) ast.Expression {

@@ -8,6 +8,27 @@ import (
 	"testing"
 )
 
+func TestParsingMethodExpressions(t *testing.T) {
+	input := "array.len(1, 2)"
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	}
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	methodCall, ok := stmt.Expression.(*ast.MethodCallExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.MethodCallExpression. got=%T (%+v)", stmt.Expression, stmt.Expression)
+	}
+	if len(methodCall.Call.(*ast.CallExpression).Arguments) != 2 {
+		t.Fatalf("wrong number of arguments. expected=2, got=%d", len(methodCall.Call.(*ast.CallExpression).Arguments))
+	}
+}
+
 func TestParsingIndexExpressions(t *testing.T) {
 	input := "myArray[1 + 1]"
 

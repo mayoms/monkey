@@ -28,6 +28,7 @@ if (5 < 10) {
 "foobar";
 "foo bar";
 [];
+function.call
 `
 
 	tests := []struct {
@@ -114,6 +115,9 @@ if (5 < 10) {
 		{token.LBRACKET, "["},
 		{token.RBRACKET, "]"},
 		{token.SEMICOLON, ";"},
+		{token.IDENT, "function"},
+		{token.DOT, "."},
+		{token.IDENT, "call"},
 		{token.EOF, ""},
 	}
 
