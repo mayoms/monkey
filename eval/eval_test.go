@@ -96,6 +96,9 @@ func TestBuiltinFunction(t *testing.T) {
 		{`len("")`, 0},
 		{`len("four")`, 4},
 		{`len([1, 3, 5])`, 3},
+		{`[1,2,3].len()`, 3},
+		{`"string".plus()`, "No method plus for object STRING"},
+		{`"string".plus`, "Method call not *ast.CallExpression. got=*ast.Identifier"},
 		{`len("one", "two")`, "too many arguments. expected=1 got=2"},
 		{`len(1)`, "unsupported type: *object.Integer"},
 	}
