@@ -95,5 +95,34 @@ func init() {
 				return a
 			},
 		},
+		"filter": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 2 {
+					return &Error{Message: fmt.Sprintf("too many arguments. expected=2. got=%d", len(args))}
+				}
+				array, ok := args[0].(*Array)
+				if !ok {
+					return &Error{Message: fmt.Sprintf("unsupported type %T", args[0])}
+				}
+				block, ok := args[1].(*Function)
+				if !ok {
+					return &Error{Message: fmt.Sprintf("unsupported input type %T", args[1])}
+				}
+				a := &Array{}
+				a.Members = []Object{}
+				s := NewScope(nil)
+				for _, argument := range array.Members {
+					s.Set(block.Literal.Parameters[0].Value, argument)
+					r, ok := Eval(block.Literal.Body, s).(*Boolean)
+					if !ok {
+						return &Error{Message: fmt.Sprintf("type error: return value should be boolean. got %T", r)}
+					}
+					if r.Value {
+						a.Members = append(a.Members, argument)
+					}
+				}
+				return a
+			},
+		},
 	}
 }

@@ -87,6 +87,49 @@ func TestArrayLiterals(t *testing.T) {
 	testIntegerObject(t, results.Members[2], 6)
 }
 
+func TestFunctionalMethods(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{`let a = [1,2].map(fn(x) {x + 1}); fn(x) { if (x[0] == 2) { if (x[1] == 3) { return true; }} else { return false }}(a)`, true},
+		{`let a = [1,2].filter(fn(x) {x == 1}); fn(x) { if (x.len() == 1) { if (x[0] == 1) { return true; }} else { return false }}(a)`, true},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestArrayMethods(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`[1,2,3].pop()`, 3},
+		{`[1,2,3].pop(0)`, 1},
+		{`[1,2,3].pop(2)`, 3},
+		{`let a = [1,2,3].push(4);a.pop()`, 4},
+		{`let a = [1,2,3].pop(1)`, 2},
+		{`let a = [1,2,3]; a.pop(1); a.len()`, 2},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case string:
+			errObj, ok := evaluated.(*Error)
+			if !ok {
+				t.Errorf("object is not error. got=%T (%+v)", evaluated, evaluated)
+			}
+			if errObj.Message != expected {
+				t.Errorf("wrong error message. expected=%q, got=%q", errObj.Message, expected)
+			}
+		}
+	}
+}
+
 func TestBuiltinFunction(t *testing.T) {
 	tests := []struct {
 		input    string
