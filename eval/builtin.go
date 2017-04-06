@@ -1,9 +1,11 @@
-package object
+package eval
 
-import "fmt"
+import (
+	"fmt"
+)
 
-var Builtins = map[string]Builtin{
-	"len": Builtin{
+var builtins = map[string]*Builtin{
+	"len": &Builtin{
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {
 				return &Error{Message: fmt.Sprintf("too many arguments. expected=1 got=%d", len(args))}
@@ -18,7 +20,7 @@ var Builtins = map[string]Builtin{
 			return &Error{Message: fmt.Sprintf("unsupported type: %T", args[0])}
 		},
 	},
-	"pop": Builtin{
+	"pop": &Builtin{
 		Fn: func(args ...Object) Object {
 			l := len(args)
 			if !(l == 1 || l == 2) {
@@ -48,7 +50,7 @@ var Builtins = map[string]Builtin{
 			}
 		},
 	},
-	"push": Builtin{
+	"push": &Builtin{
 		Fn: func(args ...Object) Object {
 			l := len(args)
 			if l != 2 {

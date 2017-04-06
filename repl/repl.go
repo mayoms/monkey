@@ -4,7 +4,6 @@ import (
 	"io"
 	"monkey/eval"
 	"monkey/lexer"
-	"monkey/object"
 	"monkey/parser"
 	"os"
 	"path/filepath"
@@ -26,7 +25,7 @@ func Start(out io.Writer) {
 		f.Close()
 	}
 
-	scope := object.NewScope(nil)
+	scope := eval.NewScope(nil)
 	for {
 		if line, err := l.Prompt(PROMPT); err == nil {
 			if line == "exit" {

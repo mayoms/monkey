@@ -3,30 +3,29 @@ package eval
 import (
 	"fmt"
 	"monkey/ast"
-	"monkey/object"
 )
 
 var (
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-	NULL  = &object.Null{}
+	TRUE  = &Boolean{Value: true}
+	FALSE = &Boolean{Value: false}
+	NULL  = &Null{}
 )
 
-func Eval(node ast.Node, scope *object.Scope) object.Object {
+func Eval(node ast.Node, scope *Scope) Object {
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, scope)
 	case *ast.MethodCallExpression:
 		return evalMethodCallExpression(node, scope)
 	case *ast.CallExpression:
-		f_scope := object.NewScope(scope)
+		f_scope := NewScope(scope)
 		fn, ok := scope.Get(node.Function.String())
 		if !ok {
 			if f, ok := node.Function.(*ast.FunctionLiteral); ok {
-				fn = &object.Function{Literal: f, Scope: scope}
+				fn = &Function{Literal: f, Scope: scope}
 				scope.Set(node.Function.String(), fn)
 			}
-			if builtin, ok := object.Builtins[node.Function.String()]; ok {
+			if builtin, ok := builtins[node.Function.String()]; ok {
 				return builtin.Fn(evalArgs(node.Arguments, scope)...)
 			}
 		}
@@ -34,10 +33,10 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 	case *ast.ArrayLiteral:
 		return evalArrayLiteral(node, scope)
 	case *ast.FunctionLiteral:
-		return &object.Function{Literal: node, Scope: scope}
+		return &Function{Literal: node, Scope: scope}
 	case *ast.LetStatement:
 		val := Eval(node.Value, scope)
-		if val.Type() == object.ERROR_OBJ {
+		if val.Type() == ERROR_OBJ {
 			return val
 		}
 		return scope.Set(node.Name.String(), val)
@@ -45,13 +44,13 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 		if val, ok := scope.Get(node.String()); ok {
 			return val
 		}
-		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", node.String())}
+		return &Error{Message: fmt.Sprintf("unknown identifier: %s", node.String())}
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, scope)
 	case *ast.ReturnStatement:
 		value := Eval(node.ReturnValue, scope)
 		if value != nil {
-			return &object.ReturnValue{Value: value}
+			return &ReturnValue{Value: value}
 		}
 		return NULL
 	case *ast.BlockStatement:
@@ -59,15 +58,15 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 	case *ast.InfixExpression:
 		left := Eval(node.Left, scope)
 		right := Eval(node.Right, scope)
-		if left.Type() == object.ERROR_OBJ {
+		if left.Type() == ERROR_OBJ {
 			return left
-		} else if right.Type() == object.ERROR_OBJ {
+		} else if right.Type() == ERROR_OBJ {
 			return right
 		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PrefixExpression:
 		right := Eval(node.Right, scope)
-		if right.Type() == object.ERROR_OBJ {
+		if right.Type() == ERROR_OBJ {
 			return right
 		}
 		return evalPrefixExpression(node.Operator, right)
@@ -80,9 +79,9 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 		}
 		return NULL
 	case *ast.IntegerLiteral:
-		return &object.Integer{Value: node.Value}
+		return &Integer{Value: node.Value}
 	case *ast.StringLiteral:
-		return &object.String{Value: node.Value}
+		return &String{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
 	case *ast.IndexExpression:
@@ -93,16 +92,16 @@ func Eval(node ast.Node, scope *object.Scope) object.Object {
 	return nil
 }
 
-func evalIndexExpression(left, index object.Object) object.Object {
+func evalIndexExpression(left, index Object) Object {
 	var errMsg string
-	if left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ {
-		array := left.(*object.Array)
-		idx := index.(*object.Integer)
+	if left.Type() == ARRAY_OBJ && index.Type() == INTEGER_OBJ {
+		array := left.(*Array)
+		idx := index.(*Integer)
 
 		length := int64(len(array.Members) - 1)
 		if idx.Value > length || idx.Value < -length {
 			errMsg = fmt.Sprintf("index %d out of range", idx.Value)
-			return &object.Error{Message: errMsg}
+			return &Error{Message: errMsg}
 		}
 		if idx.Value < 0 {
 			return array.Members[(length+1)+idx.Value]
@@ -110,9 +109,9 @@ func evalIndexExpression(left, index object.Object) object.Object {
 		return array.Members[idx.Value]
 	}
 	errMsg = fmt.Sprintf("index operator not supported: %s", left.Type())
-	return &object.Error{Message: errMsg}
+	return &Error{Message: errMsg}
 }
-func isTrue(obj object.Object) bool {
+func isTrue(obj Object) bool {
 	switch obj {
 	case TRUE:
 		return true
@@ -125,34 +124,34 @@ func isTrue(obj object.Object) bool {
 	}
 }
 
-func nativeBoolToBooleanObject(input bool) *object.Boolean {
+func nativeBoolToBooleanObject(input bool) *Boolean {
 	if input {
 		return TRUE
 	}
 	return FALSE
 }
 
-func evalBlockStatements(block []ast.Statement, scope *object.Scope) object.Object {
-	var results object.Object
+func evalBlockStatements(block []ast.Statement, scope *Scope) Object {
+	var results Object
 
 	for _, statement := range block {
 		results = Eval(statement, scope)
-		if results != nil && results.Type() == object.RETURN_VALUE_OBJ {
+		if results != nil && results.Type() == RETURN_VALUE_OBJ {
 			return results
 		}
 	}
 	return results
 }
 
-func evalProgram(program *ast.Program, scope *object.Scope) object.Object {
-	var results object.Object
+func evalProgram(program *ast.Program, scope *Scope) Object {
+	var results Object
 
 	for _, statement := range program.Statements {
 		results = Eval(statement, scope)
 		switch s := results.(type) {
-		case *object.ReturnValue:
+		case *ReturnValue:
 			return s.Value
-		case *object.Error:
+		case *Error:
 			return s
 		}
 	}
@@ -160,12 +159,12 @@ func evalProgram(program *ast.Program, scope *object.Scope) object.Object {
 	return results
 }
 
-func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+func evalInfixExpression(operator string, left Object, right Object) Object {
 	var errMsg string
 	switch {
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+	case left.Type() == INTEGER_OBJ && right.Type() == INTEGER_OBJ:
 		return evalIntInfixExpression(operator, left, right)
-	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+	case left.Type() == STRING_OBJ && right.Type() == STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
@@ -177,14 +176,14 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 		errMsg = fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 	if errMsg != "" {
-		return &object.Error{Message: errMsg}
+		return &Error{Message: errMsg}
 	}
 	return NULL
 }
 
-func evalStringInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-	l := left.(*object.String)
-	r := right.(*object.String)
+func evalStringInfixExpression(operator string, left Object, right Object) Object {
+	l := left.(*String)
+	r := right.(*String)
 
 	switch operator {
 	case "==":
@@ -193,24 +192,24 @@ func evalStringInfixExpression(operator string, left object.Object, right object
 		return nativeBoolToBooleanObject(l.Value != r.Value)
 	case "+":
 		// TODO: "Hello, + "World" causes some sort of infinite loop
-		return &object.String{Value: l.Value + r.Value}
+		return &String{Value: l.Value + r.Value}
 	}
-	return &object.Error{Message: fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, left.Type())}
+	return &Error{Message: fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, left.Type())}
 }
 
-func evalIntInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-	l := left.(*object.Integer)
-	r := right.(*object.Integer)
+func evalIntInfixExpression(operator string, left Object, right Object) Object {
+	l := left.(*Integer)
+	r := right.(*Integer)
 
 	switch operator {
 	case "+":
-		return &object.Integer{Value: l.Value + r.Value}
+		return &Integer{Value: l.Value + r.Value}
 	case "-":
-		return &object.Integer{Value: l.Value - r.Value}
+		return &Integer{Value: l.Value - r.Value}
 	case "*":
-		return &object.Integer{Value: l.Value * r.Value}
+		return &Integer{Value: l.Value * r.Value}
 	case "/":
-		return &object.Integer{Value: l.Value / r.Value}
+		return &Integer{Value: l.Value / r.Value}
 	case ">":
 		return nativeBoolToBooleanObject(l.Value > r.Value)
 	case "<":
@@ -223,23 +222,23 @@ func evalIntInfixExpression(operator string, left object.Object, right object.Ob
 	return NULL
 }
 
-func evalPrefixExpression(operator string, right object.Object) object.Object {
+func evalPrefixExpression(operator string, right Object) Object {
 	switch operator {
 	case "!":
 		return evalBangOperatorExpression(right)
 	case "-":
-		if i, ok := right.(*object.Integer); ok {
+		if i, ok := right.(*Integer); ok {
 			i.Value = -i.Value
 			return right
 		}
 		msg := fmt.Sprintf("unknown operator: %s%s", operator, right.Type())
-		return &object.Error{Message: msg}
+		return &Error{Message: msg}
 	default:
 		return NULL
 	}
 }
 
-func evalBangOperatorExpression(right object.Object) object.Object {
+func evalBangOperatorExpression(right Object) Object {
 	switch right {
 	case TRUE:
 		return FALSE
@@ -252,26 +251,26 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	}
 }
 
-func evalArrayLiteral(a *ast.ArrayLiteral, scope *object.Scope) object.Object {
-	return &object.Array{Members: evalArgs(a.Members, scope)}
+func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
+	return &Array{Members: evalArgs(a.Members, scope)}
 }
 
-func evalMethodCallExpression(call *ast.MethodCallExpression, scope *object.Scope) object.Object {
+func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Object {
 	obj := Eval(call.Object, scope)
 	method, ok := call.Call.(*ast.CallExpression)
 	if !ok {
-		return &object.Error{Message: fmt.Sprintf("Method call not *ast.CallExpression. got=%T", call.Call)}
+		return &Error{Message: fmt.Sprintf("Method call not *ast.CallExpression. got=%T", call.Call)}
 	}
 	args := evalArgs(method.Arguments, scope)
 	return obj.CallMethod(method.Function.String(), args)
 }
 
-func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Object {
+func evalFunctionCall(call *ast.CallExpression, scope *Scope) Object {
 	f, ok := scope.Get(call.Function.String())
 	if !ok {
-		return &object.Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
+		return &Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
 	}
-	fn := f.(*object.Function)
+	fn := f.(*Function)
 	fn.Scope = scope
 	args := evalArgs(call.Arguments, scope)
 	// TODO: If the wrong number of params is passed a panic occurs
@@ -279,14 +278,14 @@ func evalFunctionCall(call *ast.CallExpression, scope *object.Scope) object.Obje
 		scope.Set(v.String(), args[i])
 	}
 	r := Eval(fn.Literal.Body, scope)
-	if obj, ok := r.(*object.ReturnValue); ok {
+	if obj, ok := r.(*ReturnValue); ok {
 		return obj.Value
 	}
 	return r
 }
 
-func evalArgs(args []ast.Expression, scope *object.Scope) []object.Object {
-	e := []object.Object{}
+func evalArgs(args []ast.Expression, scope *Scope) []Object {
+	e := []Object{}
 	for _, v := range args {
 		e = append(e, Eval(v, scope))
 	}

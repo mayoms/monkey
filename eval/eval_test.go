@@ -2,7 +2,6 @@ package eval
 
 import (
 	"monkey/lexer"
-	"monkey/object"
 	"monkey/parser"
 	"testing"
 )
@@ -60,7 +59,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
 		} else {
-			if err, ok := evaluated.(*object.Error); ok {
+			if err, ok := evaluated.(*Error); ok {
 				if err.Message != "index 3 out of range" {
 					t.Errorf("wrong error message. got=%s", err.Message)
 				}
@@ -76,7 +75,7 @@ func TestArrayLiterals(t *testing.T) {
 	input := "[1, 2 * 2, 3 + 3]"
 
 	evaluated := testEval(input)
-	results, ok := evaluated.(*object.Array)
+	results, ok := evaluated.(*Array)
 	if !ok {
 		t.Fatalf("object is not Array. got=%T", evaluated)
 	}
@@ -100,7 +99,7 @@ func TestBuiltinFunction(t *testing.T) {
 		{`"string".plus()`, "No method plus for object STRING"},
 		{`"string".plus`, "Method call not *ast.CallExpression. got=*ast.Identifier"},
 		{`len("one", "two")`, "too many arguments. expected=1 got=2"},
-		{`len(1)`, "unsupported type: *object.Integer"},
+		{`len(1)`, "unsupported type: *eval.Integer"},
 	}
 
 	for _, tt := range tests {
@@ -109,7 +108,7 @@ func TestBuiltinFunction(t *testing.T) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
 		case string:
-			errObj, ok := evaluated.(*object.Error)
+			errObj, ok := evaluated.(*Error)
 			if !ok {
 				t.Errorf("object is not error. got=%T (%+v)", evaluated, evaluated)
 			}
@@ -173,7 +172,7 @@ func TestFunctionObject(t *testing.T) {
 
 	evaluated := testEval(input)
 
-	fn, ok := evaluated.(*object.Function)
+	fn, ok := evaluated.(*Function)
 	if !ok {
 		t.Fatalf("object is not Function. got=%T (%+v)", evaluated, evaluated)
 	}
@@ -262,7 +261,7 @@ if (10 > 1) {
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		errObj, ok := evaluated.(*object.Error)
+		errObj, ok := evaluated.(*Error)
 		if !ok {
 			t.Errorf("no error object returned. got=%T (%+v)", evaluated, evaluated)
 			continue
@@ -339,7 +338,7 @@ func TestIfElseExpressions(t *testing.T) {
 	}
 }
 
-func testNullObject(t *testing.T, obj object.Object) bool {
+func testNullObject(t *testing.T, obj Object) bool {
 	if obj != NULL {
 		t.Errorf("object is not NULL. got=%T (%+v)", obj, obj)
 		return false
@@ -392,8 +391,8 @@ func TestEvalBooleanExpressions(t *testing.T) {
 	}
 }
 
-func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
-	result, ok := obj.(*object.Boolean)
+func testBooleanObject(t *testing.T, obj Object, expected bool) bool {
+	result, ok := obj.(*Boolean)
 	if !ok {
 		t.Errorf("object is not Boolean. got=%T (%+v)", obj, obj)
 		return false
@@ -433,17 +432,17 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
-func testEval(input string) object.Object {
+func testEval(input string) Object {
 	l := lexer.New(input)
 	p := parser.New(l)
-	s := object.NewScope(nil)
+	s := NewScope(nil)
 	program := p.ParseProgram()
 
 	return Eval(program, s)
 }
 
-func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
-	result, ok := obj.(*object.Integer)
+func testIntegerObject(t *testing.T, obj Object, expected int64) bool {
+	result, ok := obj.(*Integer)
 	if !ok {
 		t.Errorf("object is not Integer. got=%T (%+v)", obj, obj)
 		return false
@@ -455,8 +454,8 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	return true
 }
 
-func testStringObject(t *testing.T, obj object.Object, expected string) bool {
-	result, ok := obj.(*object.String)
+func testStringObject(t *testing.T, obj Object, expected string) bool {
+	result, ok := obj.(*String)
 	if !ok {
 		t.Errorf("object is not String. got=%T (%+v)", obj, obj)
 		return false

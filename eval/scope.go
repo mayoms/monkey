@@ -1,4 +1,4 @@
-package object
+package eval
 
 func NewScope(p *Scope) *Scope {
 	s := make(map[string]Object)

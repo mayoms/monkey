@@ -1,4 +1,4 @@
-package object
+package eval
 
 import (
 	"bytes"
@@ -72,7 +72,7 @@ func (a *Array) Inspect() string {
 }
 func (a *Array) Type() ObjectType { return ARRAY_OBJ }
 func (a *Array) CallMethod(method string, args []Object) Object {
-	builtin, ok := Builtins[method]
+	builtin, ok := builtins[method]
 	if !ok {
 		return &Error{Message: fmt.Sprintf(NOMETHODERROR, method, a.Type())}
 	}
@@ -101,7 +101,7 @@ type String struct{ Value string }
 func (s *String) Inspect() string  { return s.Value }
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) CallMethod(method string, args []Object) Object {
-	builtin, ok := Builtins[method]
+	builtin, ok := builtins[method]
 	if !ok {
 		return &Error{Message: fmt.Sprintf(NOMETHODERROR, method, s.Type())}
 	}
