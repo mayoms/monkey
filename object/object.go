@@ -76,7 +76,7 @@ func (a *Array) CallMethod(method string, args []Object) Object {
 	if !ok {
 		return &Error{Message: fmt.Sprintf(NOMETHODERROR, method, a.Type())}
 	}
-	args = append(args, a)
+	args = append([]Object{a}, args...)
 	return builtin.Fn(args...)
 }
 
@@ -105,7 +105,7 @@ func (s *String) CallMethod(method string, args []Object) Object {
 	if !ok {
 		return &Error{Message: fmt.Sprintf(NOMETHODERROR, method, s.Type())}
 	}
-	args = append(args, s)
+	args = append([]Object{s}, args...)
 	return builtin.Fn(args...)
 }
 

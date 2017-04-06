@@ -24,20 +24,27 @@ var Builtins = map[string]Builtin{
 			if !(l == 1 || l == 2) {
 				return &Error{Message: fmt.Sprintf("too many arguments. expected=1 or 2. got=%d", len(args))}
 			}
-			switch obj := args[l-1].(type) {
+			switch obj := args[0].(type) {
 			case *Array:
 				if l == 1 {
+					last := len(obj.Members) - 1
+					popped := obj.Members[last]
+					obj.Members = obj.Members[:last]
+					return popped
+				}
+				idx := args[1].(*Integer).Value
+				if idx == 0 {
 					popped, shifted := obj.Members[0], obj.Members[1:]
 					obj.Members = shifted
 					return popped
-				} else {
-					idx := args[0].(*Integer).Value
-					popped := obj.Members[idx]
-					obj.Members = append(obj.Members[:idx], obj.Members[idx+1:]...)
-					return popped
 				}
+				popped := obj.Members[idx]
+				obj.Members = append(obj.Members[:idx], obj.Members[idx+1:]...)
+				return popped
+
 			default:
-				return &Error{Message: fmt.Sprintf("unsupportedtype %T", args[0])}
+
+				return &Error{Message: fmt.Sprintf("unsupported type %T", args[0])}
 			}
 		},
 	},
@@ -47,12 +54,12 @@ var Builtins = map[string]Builtin{
 			if l != 2 {
 				return &Error{Message: fmt.Sprintf("too many arguments. expected=1. got=%d", len(args))}
 			}
-			switch obj := args[l-1].(type) {
+			switch obj := args[0].(type) {
 			case *Array:
-				obj.Members = append(obj.Members, args[0])
+				obj.Members = append(obj.Members, args[1])
 				return obj
 			default:
-				return &Error{Message: fmt.Sprintf("unsupportedtype %T", args[0])}
+				return &Error{Message: fmt.Sprintf("unsupported type %T", args[1])}
 			}
 		},
 	},
