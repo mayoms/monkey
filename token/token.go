@@ -28,6 +28,7 @@ const (
 	LBRACKET = "["
 	RBRACKET = "]"
 	DOT      = "."
+	ARROW    = "->"
 
 	FUNCTION = "FUNCTION"
 	LET      = "LET"

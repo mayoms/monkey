@@ -66,7 +66,12 @@ func (l *Lexer) NextToken() token.Token {
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
 	case '-':
-		tok = newToken(token.MINUS, l.ch)
+		if l.peekChar() == '>' {
+			tok = token.Token{token.ARROW, string(l.ch) + string(l.peekChar())}
+			l.readChar()
+		} else {
+			tok = newToken(token.MINUS, l.ch)
+		}
 	case '!':
 		if l.peekChar() == '=' {
 			tok = token.Token{token.NEQ, string(l.ch) + string(l.peekChar())}

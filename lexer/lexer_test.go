@@ -29,6 +29,7 @@ if (5 < 10) {
 "foo bar";
 [];
 function.call
+{ "foo" -> "bar" }
 `
 
 	tests := []struct {
@@ -118,6 +119,11 @@ function.call
 		{token.IDENT, "function"},
 		{token.DOT, "."},
 		{token.IDENT, "call"},
+		{token.LBRACE, "{"},
+		{token.STRING, "foo"},
+		{token.ARROW, "->"},
+		{token.STRING, "bar"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 

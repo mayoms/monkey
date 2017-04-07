@@ -8,6 +8,38 @@ import (
 	"testing"
 )
 
+func TestParsingHashLiteralExpressions(t *testing.T) {
+	input := `{"one" -> 1, "two" -> 2, "three"-> 3}`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	hash, ok := stmt.Expression.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt)
+	}
+	if len(hash.Pairs) != 3 {
+		t.Fatalf("wrong number of hash pairs. expected=3, got=%d", len(hash.Pairs))
+	}
+
+	expected := map[string]int64{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+	for key, value := range hash.Pairs {
+		if literal, ok := key.(*ast.StringLiteral); ok {
+			expectedValue := expected[literal.String()]
+			testIntegerLiteral(t, value, expectedValue)
+		} else {
+			t.Fatalf("key not *ast.StringLiteral. got=%T", key)
+		}
+	}
+
+}
+
 func TestParsingMethodExpressions(t *testing.T) {
 	input := "array.len(1, 2)"
 	l := lexer.New(input)
