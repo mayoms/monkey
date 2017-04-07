@@ -15,113 +15,236 @@ func Eval(node ast.Node, scope *Scope) Object {
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, scope)
-
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, scope)
-
 	case *ast.LetStatement:
-		val := Eval(node.Value, scope)
-		if val.Type() == ERROR_OBJ {
-			return val
-		}
-		return scope.Set(node.Name.String(), val)
-
+		return evalLetStatement(node, scope)
 	case *ast.ReturnStatement:
-		value := Eval(node.ReturnValue, scope)
-		if value != nil {
-			return &ReturnValue{Value: value}
-		}
-		return NULL
-
+		return evalReturnStatment(node, scope)
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
-
 	case *ast.IntegerLiteral:
-		return &Integer{Value: node.Value}
-
+		return evalIntegerLiteral(node)
 	case *ast.StringLiteral:
-		return &String{Value: node.Value}
-
+		return evalStringLiteral(node)
+	case *ast.Identifier:
+		return evalIdentifier(node, scope)
 	case *ast.ArrayLiteral:
 		return evalArrayLiteral(node, scope)
-
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, scope)
-
 	case *ast.FunctionLiteral:
-		return &Function{Literal: node, Scope: scope}
-
-	case *ast.Identifier:
-		if val, ok := scope.Get(node.String()); ok {
-			return val
-		}
-		return &Error{Message: fmt.Sprintf("unknown identifier: %s", node.String())}
-
+		return evalFunctionLiteral(node, scope)
 	case *ast.PrefixExpression:
-		right := Eval(node.Right, scope)
-		if right.Type() == ERROR_OBJ {
-			return right
-		}
-		return evalPrefixExpression(node.Operator, right)
-
+		return evalPrefixExpression(node, scope)
 	case *ast.InfixExpression:
-		left := Eval(node.Left, scope)
-		right := Eval(node.Right, scope)
-		if left.Type() == ERROR_OBJ {
-			return left
-		} else if right.Type() == ERROR_OBJ {
-			return right
-		}
-		return evalInfixExpression(node.Operator, left, right)
-
+		return evalInfixExpression(node, scope)
 	case *ast.IfExpression:
-		condition := Eval(node.Condition, scope)
-		if isTrue(condition) {
-			return evalBlockStatements(node.Consequence.Statements, scope)
-		} else if node.Alternative != nil {
-			return evalBlockStatements(node.Alternative.Statements, scope)
-		}
-		return NULL
-
+		return evalIfExpression(node, scope)
 	case *ast.BlockStatement:
 		return evalBlockStatements(node.Statements, scope)
-
 	case *ast.CallExpression:
-		f_scope := NewScope(scope)
-		fn, ok := scope.Get(node.Function.String())
-		if !ok {
-			if f, ok := node.Function.(*ast.FunctionLiteral); ok {
-				fn = &Function{Literal: f, Scope: scope}
-				scope.Set(node.Function.String(), fn)
-			}
-			if builtin, ok := builtins[node.Function.String()]; ok {
-				return builtin.Fn(evalArgs(node.Arguments, scope)...)
-			}
-		}
-		return evalFunctionCall(node, f_scope)
-
+		return evalFunctionCall(node, scope)
 	case *ast.MethodCallExpression:
 		return evalMethodCallExpression(node, scope)
-
 	case *ast.IndexExpression:
-		left := Eval(node.Left, scope)
-		index := Eval(node.Index, scope)
-		return evalIndexExpression(left, index)
+		return evalIndexExpression(node, scope)
 	}
 	return nil
 }
 
-func evalIndexExpression(left, index Object) Object {
+func evalLetStatement(l *ast.LetStatement, scope *Scope) (val Object) {
+	if val = Eval(l.Value, scope); val.Type() != ERROR_OBJ {
+		return scope.Set(l.Name.String(), val)
+	}
+	return
+}
+
+func evalReturnStatment(r *ast.ReturnStatement, scope *Scope) Object {
+	if value := Eval(r.ReturnValue, scope); value != nil {
+		return &ReturnValue{Value: value}
+	}
+	return NULL
+}
+
+func nativeBoolToBooleanObject(input bool) *Boolean {
+	if input {
+		return TRUE
+	}
+	return FALSE
+}
+
+func evalIntegerLiteral(i *ast.IntegerLiteral) Object {
+	return &Integer{Value: i.Value}
+}
+
+func evalStringLiteral(s *ast.StringLiteral) Object {
+	return &String{Value: s.Value}
+}
+
+func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
+	return &Array{Members: evalArgs(a.Members, scope)}
+}
+
+func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
+	if val, ok := scope.Get(i.String()); ok {
+		return val
+	}
+	return &Error{Message: fmt.Sprintf("unknown identifier: %s", i.String())}
+}
+
+func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
+	hashMap := make(map[HashKey]HashPair)
+	// TODO: { 1 -> true, 2 -> "five", "three"-> "four } causes some sort of infinite loop
+	for key, value := range hl.Pairs {
+		key := Eval(key, scope)
+		if hashable, ok := key.(Hashable); ok {
+			hashMap[hashable.HashKey()] = HashPair{Key: key, Value: Eval(value, scope)}
+		} else {
+			return &Error{Message: fmt.Sprintf("key error: %T not hashable", key.Type())}
+		}
+	}
+	return &Hash{Pairs: hashMap}
+}
+
+func evalFunctionLiteral(fl *ast.FunctionLiteral, scope *Scope) Object {
+	return &Function{Literal: fl, Scope: scope}
+}
+
+func evalPrefixExpression(p *ast.PrefixExpression, s *Scope) Object {
+	right := Eval(p.Right, s)
+	if right.Type() == ERROR_OBJ {
+		return right
+	}
+	switch p.Operator {
+	case "!":
+		return evalBangOperatorExpression(right)
+	case "-":
+		if i, ok := right.(*Integer); ok {
+			i.Value = -i.Value
+			return i
+		}
+	}
+	return &Error{Message: fmt.Sprintf("unknown operator: %s%s", p.Operator, right.Type())}
+}
+
+func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
+	left := Eval(i.Left, s)
+	right := Eval(i.Right, s)
+	if left.Type() == ERROR_OBJ {
+		return left
+	} else if right.Type() == ERROR_OBJ {
+		return right
+	}
+
 	var errMsg string
+	switch {
+	case left.Type() == INTEGER_OBJ && right.Type() == INTEGER_OBJ:
+		return evalIntInfixExpression(i.Operator, left, right)
+	case left.Type() == STRING_OBJ && right.Type() == STRING_OBJ:
+		return evalStringInfixExpression(i.Operator, left, right)
+	case i.Operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case i.Operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
+	case left.Type() != right.Type():
+		errMsg = fmt.Sprintf("type mismatch: %s %s %s", left.Type(), i.Operator, right.Type())
+	default:
+		errMsg = fmt.Sprintf("unknown operator: %s %s %s", left.Type(), i.Operator, right.Type())
+	}
+	return &Error{Message: errMsg}
+}
+
+func evalIfExpression(ie *ast.IfExpression, s *Scope) Object {
+	condition := Eval(ie.Condition, s)
+	if isTrue(condition) {
+		return evalBlockStatements(ie.Consequence.Statements, s)
+	} else if ie.Alternative != nil {
+		return evalBlockStatements(ie.Alternative.Statements, s)
+	}
+	return NULL
+}
+
+func evalBlockStatements(block []ast.Statement, scope *Scope) (results Object) {
+	for _, statement := range block {
+		results = Eval(statement, scope)
+		if results != nil && results.Type() == RETURN_VALUE_OBJ {
+			return
+		}
+	}
+	return
+}
+
+func evalFunctionCall(call *ast.CallExpression, s *Scope) Object {
+	fn, ok := s.Get(call.Function.String())
+	if !ok {
+		if f, ok := call.Function.(*ast.FunctionLiteral); ok {
+			fn = &Function{Literal: f, Scope: s}
+			s.Set(call.Function.String(), fn)
+		} else if builtin, ok := builtins[call.Function.String()]; ok {
+			return builtin.Fn(evalArgs(call.Arguments, s)...)
+		} else {
+			return &Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
+		}
+	}
+	f := fn.(*Function)
+	f.Scope = NewScope(s)
+	args := evalArgs(call.Arguments, f.Scope)
+	// TODO: If the wrong number of params is passed a panic occurs
+	for i, v := range f.Literal.Parameters {
+		f.Scope.Set(v.String(), args[i])
+	}
+	r := Eval(f.Literal.Body, f.Scope)
+	if obj, ok := r.(*ReturnValue); ok {
+		return obj.Value
+	}
+	return r
+}
+
+func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Object {
+	obj := Eval(call.Object, scope)
+	method, ok := call.Call.(*ast.CallExpression)
+	if !ok {
+		return &Error{Message: fmt.Sprintf("Method call not *ast.CallExpression. got=%T", call.Call)}
+	}
+	args := evalArgs(method.Arguments, scope)
+	return obj.CallMethod(method.Function.String(), args)
+}
+
+func evalArgs(args []ast.Expression, scope *Scope) []Object {
+	e := []Object{}
+	for _, v := range args {
+		e = append(e, Eval(v, scope))
+	}
+	return e
+}
+
+func evalProgram(program *ast.Program, scope *Scope) (results Object) {
+	for _, statement := range program.Statements {
+		results = Eval(statement, scope)
+		switch s := results.(type) {
+		case *ReturnValue:
+			return s.Value
+		case *Error:
+			return s
+		}
+	}
+	return
+}
+
+func evalIndexExpression(ie *ast.IndexExpression, s *Scope) Object {
+	left := Eval(ie.Left, s)
+	index := Eval(ie.Index, s)
+	if index.Type() == ERROR_OBJ {
+		return index
+	}
 	switch iterable := left.(type) {
 	case *Array:
 		return evalArrayIndex(iterable, index)
 	case *Hash:
 		return evalHashKeyIndex(iterable, index)
-	default:
-		errMsg = fmt.Sprintf("index not supported for type: %s", left.Type())
 	}
-	return &Error{Message: errMsg}
+	return &Error{Message: fmt.Sprintf("index not supported for type: %s", left.Type())}
 }
 
 func evalHashKeyIndex(hash *Hash, key Object) Object {
@@ -137,15 +260,9 @@ func evalHashKeyIndex(hash *Hash, key Object) Object {
 }
 
 func evalArrayIndex(array *Array, index Object) Object {
-	var errMsg string
 	idx, ok := index.(*Integer)
 	if !ok {
-		if err, ok := index.(*Error); ok {
-			errMsg = fmt.Sprintf("type error: index not integer. got=Err: %s", err.Message)
-		} else {
-			errMsg = fmt.Sprintf("type error: index not integer. got=%s", index.Type())
-		}
-		return &Error{Message: errMsg}
+		return &Error{Message: fmt.Sprintf("type error: index not integer. got=%s", index.Type())}
 	}
 	length := int64(len(array.Members))
 	if idx.Value > length-1 || idx.Value < -length {
@@ -168,63 +285,6 @@ func isTrue(obj Object) bool {
 	default:
 		return true
 	}
-}
-
-func nativeBoolToBooleanObject(input bool) *Boolean {
-	if input {
-		return TRUE
-	}
-	return FALSE
-}
-
-func evalBlockStatements(block []ast.Statement, scope *Scope) Object {
-	var results Object
-
-	for _, statement := range block {
-		results = Eval(statement, scope)
-		if results != nil && results.Type() == RETURN_VALUE_OBJ {
-			return results
-		}
-	}
-	return results
-}
-
-func evalProgram(program *ast.Program, scope *Scope) Object {
-	var results Object
-
-	for _, statement := range program.Statements {
-		results = Eval(statement, scope)
-		switch s := results.(type) {
-		case *ReturnValue:
-			return s.Value
-		case *Error:
-			return s
-		}
-	}
-
-	return results
-}
-
-func evalInfixExpression(operator string, left Object, right Object) Object {
-	var errMsg string
-	switch {
-	case left.Type() == INTEGER_OBJ && right.Type() == INTEGER_OBJ:
-		return evalIntInfixExpression(operator, left, right)
-	case left.Type() == STRING_OBJ && right.Type() == STRING_OBJ:
-		return evalStringInfixExpression(operator, left, right)
-	case operator == "==":
-		return nativeBoolToBooleanObject(left == right)
-	case operator == "!=":
-		return nativeBoolToBooleanObject(left != right)
-	case left.Type() != right.Type():
-		errMsg = fmt.Sprintf("type mismatch: %s %s %s", left.Type(), operator, right.Type())
-	default:
-		errMsg = fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, right.Type())
-	}
-	if errMsg != "" {
-		return &Error{Message: errMsg}
-	}
-	return NULL
 }
 
 func evalStringInfixExpression(operator string, left Object, right Object) Object {
@@ -268,22 +328,6 @@ func evalIntInfixExpression(operator string, left Object, right Object) Object {
 	return NULL
 }
 
-func evalPrefixExpression(operator string, right Object) Object {
-	switch operator {
-	case "!":
-		return evalBangOperatorExpression(right)
-	case "-":
-		if i, ok := right.(*Integer); ok {
-			i.Value = -i.Value
-			return right
-		}
-		msg := fmt.Sprintf("unknown operator: %s%s", operator, right.Type())
-		return &Error{Message: msg}
-	default:
-		return NULL
-	}
-}
-
 func evalBangOperatorExpression(right Object) Object {
 	switch right {
 	case TRUE:
@@ -295,60 +339,4 @@ func evalBangOperatorExpression(right Object) Object {
 	default:
 		return FALSE
 	}
-}
-
-func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
-	return &Array{Members: evalArgs(a.Members, scope)}
-}
-
-func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
-	hashMap := make(map[HashKey]HashPair)
-	// TODO: { 1 -> true, 2 -> "five", "three"-> "four } causes some sort of infinite loop
-	for key, value := range hl.Pairs {
-		key := Eval(key, scope)
-		hashable, ok := key.(Hashable)
-		if !ok {
-			return &Error{Message: fmt.Sprintf("key error: %T not hashable", key.Type())}
-		}
-		hashMap[hashable.HashKey()] = HashPair{Key: key, Value: Eval(value, scope)}
-
-	}
-	return &Hash{Pairs: hashMap}
-}
-
-func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Object {
-	obj := Eval(call.Object, scope)
-	method, ok := call.Call.(*ast.CallExpression)
-	if !ok {
-		return &Error{Message: fmt.Sprintf("Method call not *ast.CallExpression. got=%T", call.Call)}
-	}
-	args := evalArgs(method.Arguments, scope)
-	return obj.CallMethod(method.Function.String(), args)
-}
-
-func evalFunctionCall(call *ast.CallExpression, scope *Scope) Object {
-	f, ok := scope.Get(call.Function.String())
-	if !ok {
-		return &Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
-	}
-	fn := f.(*Function)
-	fn.Scope = scope
-	args := evalArgs(call.Arguments, scope)
-	// TODO: If the wrong number of params is passed a panic occurs
-	for i, v := range fn.Literal.Parameters {
-		scope.Set(v.String(), args[i])
-	}
-	r := Eval(fn.Literal.Body, scope)
-	if obj, ok := r.(*ReturnValue); ok {
-		return obj.Value
-	}
-	return r
-}
-
-func evalArgs(args []ast.Expression, scope *Scope) []Object {
-	e := []Object{}
-	for _, v := range args {
-		e = append(e, Eval(v, scope))
-	}
-	return e
 }
