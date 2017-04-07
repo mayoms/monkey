@@ -96,23 +96,50 @@ func Eval(node ast.Node, scope *Scope) Object {
 
 func evalIndexExpression(left, index Object) Object {
 	var errMsg string
-	if left.Type() == ARRAY_OBJ && index.Type() == INTEGER_OBJ {
-		array := left.(*Array)
-		idx := index.(*Integer)
-
-		length := int64(len(array.Members) - 1)
-		if idx.Value > length || idx.Value < -length {
-			errMsg = fmt.Sprintf("index %d out of range", idx.Value)
-			return &Error{Message: errMsg}
-		}
-		if idx.Value < 0 {
-			return array.Members[(length+1)+idx.Value]
-		}
-		return array.Members[idx.Value]
+	switch iterable := left.(type) {
+	case *Array:
+		return evalArrayIndex(iterable, index)
+	case *Hash:
+		return evalHashKeyIndex(iterable, index)
+	default:
+		errMsg = fmt.Sprintf("index not supported for type: %s", left.Type())
 	}
-	errMsg = fmt.Sprintf("index operator not supported: %s", left.Type())
 	return &Error{Message: errMsg}
 }
+
+func evalHashKeyIndex(hash *Hash, key Object) Object {
+	hashable, ok := key.(Hashable)
+	if !ok {
+		return &Error{Message: fmt.Sprintf("key error: %s not hashable", key.Type())}
+	}
+	hashPair, ok := hash.Pairs[hashable.HashKey()]
+	if !ok {
+		return NULL
+	}
+	return hashPair.Value
+}
+
+func evalArrayIndex(array *Array, index Object) Object {
+	var errMsg string
+	idx, ok := index.(*Integer)
+	if !ok {
+		if err, ok := index.(*Error); ok {
+			errMsg = fmt.Sprintf("type error: index not integer. got=Err: %s", err.Message)
+		} else {
+			errMsg = fmt.Sprintf("type error: index not integer. got=%s", index.Type())
+		}
+		return &Error{Message: errMsg}
+	}
+	length := int64(len(array.Members))
+	if idx.Value > length-1 || idx.Value < -length {
+		return &Error{Message: fmt.Sprintf("index %d out of range", idx.Value)}
+	}
+	if idx.Value < 0 {
+		return array.Members[(length)+idx.Value]
+	}
+	return array.Members[idx.Value]
+}
+
 func isTrue(obj Object) bool {
 	switch obj {
 	case TRUE:
@@ -264,7 +291,7 @@ func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
 		key := Eval(key, scope)
 		hashable, ok := key.(Hashable)
 		if !ok {
-			return &Error{Message: fmt.Sprintf("%T not hashable", key.Type())}
+			return &Error{Message: fmt.Sprintf("key error: %T not hashable", key.Type())}
 		}
 		hashMap[hashable.HashKey()] = HashPair{Key: key, Value: Eval(value, scope)}
 
