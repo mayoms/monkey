@@ -32,6 +32,8 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalFunctionCall(node, f_scope)
 	case *ast.ArrayLiteral:
 		return evalArrayLiteral(node, scope)
+	case *ast.HashLiteral:
+		return evalHashLiteral(node, scope)
 	case *ast.FunctionLiteral:
 		return &Function{Literal: node, Scope: scope}
 	case *ast.LetStatement:
@@ -253,6 +255,21 @@ func evalBangOperatorExpression(right Object) Object {
 
 func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
 	return &Array{Members: evalArgs(a.Members, scope)}
+}
+
+func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
+	hashMap := make(map[HashKey]HashPair)
+	// TODO: { 1 -> true, 2 -> "five", "three"-> "four } causes some sort of infinite loop
+	for key, value := range hl.Pairs {
+		key := Eval(key, scope)
+		hashable, ok := key.(Hashable)
+		if !ok {
+			return &Error{Message: fmt.Sprintf("%T not hashable", key.Type())}
+		}
+		hashMap[hashable.HashKey()] = HashPair{Key: key, Value: Eval(value, scope)}
+
+	}
+	return &Hash{Pairs: hashMap}
 }
 
 func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Object {

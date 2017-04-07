@@ -6,6 +6,53 @@ import (
 	"testing"
 )
 
+func TestHashLiterals(t *testing.T) {
+	input := `
+	let two = "two";
+	{
+		"one"        -> 10 - 9,
+		two          -> 1 + 1,
+		"thr" + "ee" -> 6 /2,
+		4            -> 4,
+		true         -> 5,
+		false        -> 6
+	}`
+
+	evaluated := testEval(input)
+	hash, ok := evaluated.(*Hash)
+	if !ok {
+		t.Fatalf("Eval didn't return Hash. got=%T, (%+v)", evaluated, evaluated)
+	}
+	expected := map[HashKey]int64{
+		(&String{Value: "one"}).HashKey():   1,
+		(&String{Value: "two"}).HashKey():   2,
+		(&String{Value: "three"}).HashKey(): 3,
+		(&Integer{Value: 4}).HashKey():      4,
+		TRUE.HashKey():                      5,
+		FALSE.HashKey():                     6,
+	}
+	if len(hash.Pairs) != len(expected) {
+		t.Fatalf("Hash has wrong number of pairs. expected=%d, got=%d", len(expected), len(hash.Pairs))
+	}
+}
+
+func TestStringHashKey(t *testing.T) {
+	hello1 := &String{Value: "Hello World"}
+	hello2 := &String{Value: "Hello World"}
+	diff1 := &String{Value: "My name is johnny"}
+	diff2 := &String{Value: "My name is johnny"}
+
+	if hello1.HashKey() != hello2.HashKey() {
+		t.Errorf("strings with same content have different hash keys")
+	}
+	if diff1.HashKey() != diff2.HashKey() {
+		t.Errorf("strings with same content have different hash keys")
+	}
+	if diff1.HashKey() == hello1.HashKey() {
+		t.Errorf("strings with different content have same hash key")
+	}
+}
+
 func TestArrayIndexExpressions(t *testing.T) {
 	tests := []struct {
 		input    string

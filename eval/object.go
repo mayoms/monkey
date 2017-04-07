@@ -19,7 +19,8 @@ const (
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN"
-	ARRAY_OBJ        = "ARRAY_OBJ"
+	ARRAY_OBJ        = "ARRAY"
+	HASH_OBJ         = "HASH"
 
 	// NOMETHODERROR = no method on object
 	NOMETHODERROR = "No method %s for object %s"
