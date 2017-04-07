@@ -15,8 +15,77 @@ func Eval(node ast.Node, scope *Scope) Object {
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalProgram(node, scope)
-	case *ast.MethodCallExpression:
-		return evalMethodCallExpression(node, scope)
+
+	case *ast.ExpressionStatement:
+		return Eval(node.Expression, scope)
+
+	case *ast.LetStatement:
+		val := Eval(node.Value, scope)
+		if val.Type() == ERROR_OBJ {
+			return val
+		}
+		return scope.Set(node.Name.String(), val)
+
+	case *ast.ReturnStatement:
+		value := Eval(node.ReturnValue, scope)
+		if value != nil {
+			return &ReturnValue{Value: value}
+		}
+		return NULL
+
+	case *ast.Boolean:
+		return nativeBoolToBooleanObject(node.Value)
+
+	case *ast.IntegerLiteral:
+		return &Integer{Value: node.Value}
+
+	case *ast.StringLiteral:
+		return &String{Value: node.Value}
+
+	case *ast.ArrayLiteral:
+		return evalArrayLiteral(node, scope)
+
+	case *ast.HashLiteral:
+		return evalHashLiteral(node, scope)
+
+	case *ast.FunctionLiteral:
+		return &Function{Literal: node, Scope: scope}
+
+	case *ast.Identifier:
+		if val, ok := scope.Get(node.String()); ok {
+			return val
+		}
+		return &Error{Message: fmt.Sprintf("unknown identifier: %s", node.String())}
+
+	case *ast.PrefixExpression:
+		right := Eval(node.Right, scope)
+		if right.Type() == ERROR_OBJ {
+			return right
+		}
+		return evalPrefixExpression(node.Operator, right)
+
+	case *ast.InfixExpression:
+		left := Eval(node.Left, scope)
+		right := Eval(node.Right, scope)
+		if left.Type() == ERROR_OBJ {
+			return left
+		} else if right.Type() == ERROR_OBJ {
+			return right
+		}
+		return evalInfixExpression(node.Operator, left, right)
+
+	case *ast.IfExpression:
+		condition := Eval(node.Condition, scope)
+		if isTrue(condition) {
+			return evalBlockStatements(node.Consequence.Statements, scope)
+		} else if node.Alternative != nil {
+			return evalBlockStatements(node.Alternative.Statements, scope)
+		}
+		return NULL
+
+	case *ast.BlockStatement:
+		return evalBlockStatements(node.Statements, scope)
+
 	case *ast.CallExpression:
 		f_scope := NewScope(scope)
 		fn, ok := scope.Get(node.Function.String())
@@ -30,62 +99,10 @@ func Eval(node ast.Node, scope *Scope) Object {
 			}
 		}
 		return evalFunctionCall(node, f_scope)
-	case *ast.ArrayLiteral:
-		return evalArrayLiteral(node, scope)
-	case *ast.HashLiteral:
-		return evalHashLiteral(node, scope)
-	case *ast.FunctionLiteral:
-		return &Function{Literal: node, Scope: scope}
-	case *ast.LetStatement:
-		val := Eval(node.Value, scope)
-		if val.Type() == ERROR_OBJ {
-			return val
-		}
-		return scope.Set(node.Name.String(), val)
-	case *ast.Identifier:
-		if val, ok := scope.Get(node.String()); ok {
-			return val
-		}
-		return &Error{Message: fmt.Sprintf("unknown identifier: %s", node.String())}
-	case *ast.ExpressionStatement:
-		return Eval(node.Expression, scope)
-	case *ast.ReturnStatement:
-		value := Eval(node.ReturnValue, scope)
-		if value != nil {
-			return &ReturnValue{Value: value}
-		}
-		return NULL
-	case *ast.BlockStatement:
-		return evalBlockStatements(node.Statements, scope)
-	case *ast.InfixExpression:
-		left := Eval(node.Left, scope)
-		right := Eval(node.Right, scope)
-		if left.Type() == ERROR_OBJ {
-			return left
-		} else if right.Type() == ERROR_OBJ {
-			return right
-		}
-		return evalInfixExpression(node.Operator, left, right)
-	case *ast.PrefixExpression:
-		right := Eval(node.Right, scope)
-		if right.Type() == ERROR_OBJ {
-			return right
-		}
-		return evalPrefixExpression(node.Operator, right)
-	case *ast.IfExpression:
-		condition := Eval(node.Condition, scope)
-		if isTrue(condition) {
-			return evalBlockStatements(node.Consequence.Statements, scope)
-		} else if node.Alternative != nil {
-			return evalBlockStatements(node.Alternative.Statements, scope)
-		}
-		return NULL
-	case *ast.IntegerLiteral:
-		return &Integer{Value: node.Value}
-	case *ast.StringLiteral:
-		return &String{Value: node.Value}
-	case *ast.Boolean:
-		return nativeBoolToBooleanObject(node.Value)
+
+	case *ast.MethodCallExpression:
+		return evalMethodCallExpression(node, scope)
+
 	case *ast.IndexExpression:
 		left := Eval(node.Left, scope)
 		index := Eval(node.Index, scope)

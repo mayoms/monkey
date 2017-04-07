@@ -373,7 +373,7 @@ if (10 > 1) {
 		{`"abc" > "abc"`, "unknown operator: STRING > STRING"},
 		{`"abc" < "abc"`, "unknown operator: STRING < STRING"},
 		{`{"name"->"Monkey"}[fn(x) {x}];`, "key error: FUNCTION not hashable"},
-		{`"abc"[0]`, "indexnot supported for type: STRING"},
+		{`"abc"[0]`, "index not supported for type: STRING"},
 	}
 
 	for _, tt := range tests {
