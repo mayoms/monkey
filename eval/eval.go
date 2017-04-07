@@ -53,6 +53,23 @@ func Eval(node ast.Node, scope *Scope) Object {
 	return nil
 }
 
+// Program Evaluation Entry Point Functions, and Helpers:
+
+func evalProgram(program *ast.Program, scope *Scope) (results Object) {
+	for _, statement := range program.Statements {
+		results = Eval(statement, scope)
+		switch s := results.(type) {
+		case *ReturnValue:
+			return s.Value
+		case *Error:
+			return s
+		}
+	}
+	return
+}
+
+// Statements...
+
 func evalLetStatement(l *ast.LetStatement, scope *Scope) (val Object) {
 	if val = Eval(l.Value, scope); val.Type() != ERROR_OBJ {
 		return scope.Set(l.Name.String(), val)
@@ -67,6 +84,7 @@ func evalReturnStatment(r *ast.ReturnStatement, scope *Scope) Object {
 	return NULL
 }
 
+// Booleans
 func nativeBoolToBooleanObject(input bool) *Boolean {
 	if input {
 		return TRUE
@@ -74,6 +92,7 @@ func nativeBoolToBooleanObject(input bool) *Boolean {
 	return FALSE
 }
 
+// Literals
 func evalIntegerLiteral(i *ast.IntegerLiteral) Object {
 	return &Integer{Value: i.Value}
 }
@@ -86,6 +105,7 @@ func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
 	return &Array{Members: evalArgs(a.Members, scope)}
 }
 
+// Identifier not a literal, but felt logicially like it belonged here.. Literal expressions continue below
 func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
 	if val, ok := scope.Get(i.String()); ok {
 		return val
@@ -111,6 +131,7 @@ func evalFunctionLiteral(fl *ast.FunctionLiteral, scope *Scope) Object {
 	return &Function{Literal: fl, Scope: scope}
 }
 
+// Prefix expressions, e.g. `!true, -5`
 func evalPrefixExpression(p *ast.PrefixExpression, s *Scope) Object {
 	right := Eval(p.Right, s)
 	if right.Type() == ERROR_OBJ {
@@ -128,6 +149,21 @@ func evalPrefixExpression(p *ast.PrefixExpression, s *Scope) Object {
 	return &Error{Message: fmt.Sprintf("unknown operator: %s%s", p.Operator, right.Type())}
 }
 
+// Helper for evaluating Bang(!) expressions. Coerces truthyness based on object presence.
+func evalBangOperatorExpression(right Object) Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
+}
+
+// Evaluate infix expressions, e.g 1 + 2, a = 5, true == true, etc...
 func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 	left := Eval(i.Left, s)
 	right := Eval(i.Right, s)
@@ -155,6 +191,52 @@ func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 	return &Error{Message: errMsg}
 }
 
+// Helpers for infix evaluation below
+
+func evalIntInfixExpression(operator string, left Object, right Object) Object {
+	l := left.(*Integer)
+	r := right.(*Integer)
+
+	switch operator {
+	case "+":
+		return &Integer{Value: l.Value + r.Value}
+	case "-":
+		return &Integer{Value: l.Value - r.Value}
+	case "*":
+		return &Integer{Value: l.Value * r.Value}
+	case "/":
+		return &Integer{Value: l.Value / r.Value}
+	case ">":
+		return nativeBoolToBooleanObject(l.Value > r.Value)
+	case "<":
+		return nativeBoolToBooleanObject(l.Value < r.Value)
+	case "==":
+		return nativeBoolToBooleanObject(l.Value == r.Value)
+	case "!=":
+		return nativeBoolToBooleanObject(l.Value != r.Value)
+	}
+	return NULL
+}
+
+func evalStringInfixExpression(operator string, left Object, right Object) Object {
+	l := left.(*String)
+	r := right.(*String)
+
+	switch operator {
+	case "==":
+		return nativeBoolToBooleanObject(l.Value == r.Value)
+	case "!=":
+		return nativeBoolToBooleanObject(l.Value != r.Value)
+	case "+":
+		// TODO: "Hello, + "World" causes some sort of infinite loop
+		return &String{Value: l.Value + r.Value}
+	}
+	return &Error{Message: fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, left.Type())}
+}
+
+// Back to evaluators called directly by Eval
+
+// IF expressions, if (evaluates to boolean) True: { Block Statement } Optional Else: {Block Statement}
 func evalIfExpression(ie *ast.IfExpression, s *Scope) Object {
 	condition := Eval(ie.Condition, s)
 	if isTrue(condition) {
@@ -165,6 +247,23 @@ func evalIfExpression(ie *ast.IfExpression, s *Scope) Object {
 	return NULL
 }
 
+// Helper function isTrue for IF evaluation - neccessity is dubious
+func isTrue(obj Object) bool {
+	switch obj {
+	case TRUE:
+		return true
+	case FALSE:
+		return false
+	case NULL:
+		return false
+	default:
+		return true
+	}
+}
+
+// Block Statement Evaluation - The innards of both IF and Function calls
+// very similar to parseProgram, but because we need to leave the return
+// value wrapped in it's Object, it remains, for now.
 func evalBlockStatements(block []ast.Statement, scope *Scope) (results Object) {
 	for _, statement := range block {
 		results = Eval(statement, scope)
@@ -175,6 +274,7 @@ func evalBlockStatements(block []ast.Statement, scope *Scope) (results Object) {
 	return
 }
 
+// Eval when a function is _called_, includes fn literal evaluation and calling builtins
 func evalFunctionCall(call *ast.CallExpression, s *Scope) Object {
 	fn, ok := s.Get(call.Function.String())
 	if !ok {
@@ -201,6 +301,7 @@ func evalFunctionCall(call *ast.CallExpression, s *Scope) Object {
 	return r
 }
 
+// Method calls for builtin Objects
 func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Object {
 	obj := Eval(call.Object, scope)
 	method, ok := call.Call.(*ast.CallExpression)
@@ -219,18 +320,7 @@ func evalArgs(args []ast.Expression, scope *Scope) []Object {
 	return e
 }
 
-func evalProgram(program *ast.Program, scope *Scope) (results Object) {
-	for _, statement := range program.Statements {
-		results = Eval(statement, scope)
-		switch s := results.(type) {
-		case *ReturnValue:
-			return s.Value
-		case *Error:
-			return s
-		}
-	}
-	return
-}
+// Index Expressions, i.e. array[0] or hash["mykey"]
 
 func evalIndexExpression(ie *ast.IndexExpression, s *Scope) Object {
 	left := Eval(ie.Left, s)
@@ -272,71 +362,4 @@ func evalArrayIndex(array *Array, index Object) Object {
 		return array.Members[(length)+idx.Value]
 	}
 	return array.Members[idx.Value]
-}
-
-func isTrue(obj Object) bool {
-	switch obj {
-	case TRUE:
-		return true
-	case FALSE:
-		return false
-	case NULL:
-		return false
-	default:
-		return true
-	}
-}
-
-func evalStringInfixExpression(operator string, left Object, right Object) Object {
-	l := left.(*String)
-	r := right.(*String)
-
-	switch operator {
-	case "==":
-		return nativeBoolToBooleanObject(l.Value == r.Value)
-	case "!=":
-		return nativeBoolToBooleanObject(l.Value != r.Value)
-	case "+":
-		// TODO: "Hello, + "World" causes some sort of infinite loop
-		return &String{Value: l.Value + r.Value}
-	}
-	return &Error{Message: fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, left.Type())}
-}
-
-func evalIntInfixExpression(operator string, left Object, right Object) Object {
-	l := left.(*Integer)
-	r := right.(*Integer)
-
-	switch operator {
-	case "+":
-		return &Integer{Value: l.Value + r.Value}
-	case "-":
-		return &Integer{Value: l.Value - r.Value}
-	case "*":
-		return &Integer{Value: l.Value * r.Value}
-	case "/":
-		return &Integer{Value: l.Value / r.Value}
-	case ">":
-		return nativeBoolToBooleanObject(l.Value > r.Value)
-	case "<":
-		return nativeBoolToBooleanObject(l.Value < r.Value)
-	case "==":
-		return nativeBoolToBooleanObject(l.Value == r.Value)
-	case "!=":
-		return nativeBoolToBooleanObject(l.Value != r.Value)
-	}
-	return NULL
-}
-
-func evalBangOperatorExpression(right Object) Object {
-	switch right {
-	case TRUE:
-		return FALSE
-	case FALSE:
-		return TRUE
-	case NULL:
-		return TRUE
-	default:
-		return FALSE
-	}
 }
