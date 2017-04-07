@@ -23,6 +23,12 @@ func init() {
 				return &Error{Message: fmt.Sprintf("unsupported type: %T", args[0])}
 			},
 		},
+		"puts": &Builtin{
+			Fn: func(args ...Object) Object {
+				fmt.Println(args[0].Inspect())
+				return NULL
+			},
+		},
 		"pop": &Builtin{
 			Fn: func(args ...Object) Object {
 				l := len(args)
