@@ -6,19 +6,11 @@ import (
 )
 
 func (p *Parser) parseFunctionLiteral() ast.Expression {
-
-	fn := &ast.FunctionLiteral{Token: p.curToken, Parameters: []*ast.Identifier{}}
-	if p.expectPeek(token.LPAREN) {
-		p.nextToken()
+	fn := &ast.FunctionLiteral{Token: p.curToken}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
 	}
-
-	for !p.curTokenIs(token.RPAREN) {
-		fn.Parameters = append(fn.Parameters, p.parseIdentifier().(*ast.Identifier))
-		p.nextToken()
-		if p.curTokenIs(token.COMMA) {
-			p.nextToken()
-		}
-	}
+	fn.Parameters = p.parseExpressionArray(fn.Parameters, token.RPAREN)
 	if p.expectPeek(token.LBRACE) {
 		fn.Body = p.parseBlockStatement().(*ast.BlockStatement)
 	}
@@ -26,20 +18,27 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 }
 
 func (p *Parser) parseCallExpressions(f ast.Expression) ast.Expression {
-	expression := &ast.CallExpression{Token: p.curToken, Function: f}
-	expression.Arguments = []ast.Expression{}
+	call := &ast.CallExpression{Token: p.curToken, Function: f}
+	call.Arguments = p.parseExpressionArray(call.Arguments, token.RPAREN)
+	return call
+}
 
-	if p.peekTokenIs(token.RPAREN) {
+func (p *Parser) parseExpressionArray(a []ast.Expression, closure token.TokenType) []ast.Expression {
+	if p.peekTokenIs(closure) {
 		p.nextToken()
-		return expression
+		return a
 	}
-	for !p.curTokenIs(token.RPAREN) {
+	p.nextToken()
+	a = append(a, p.parseExpression(LOWEST))
+	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
-		expression.Arguments = append(expression.Arguments, p.parseExpression(LOWEST))
 		p.nextToken()
+		a = append(a, p.parseExpression(LOWEST))
 	}
-
-	return expression
+	if !p.expectPeek(closure) {
+		return nil
+	}
+	return a
 }
 
 func (p *Parser) parseMethodCallExpressions(obj ast.Expression) ast.Expression {
@@ -49,19 +48,4 @@ func (p *Parser) parseMethodCallExpressions(obj ast.Expression) ast.Expression {
 	return methodCall
 }
 
-func (p *Parser) parseBlockStatement() ast.Expression {
-	expression := &ast.BlockStatement{Token: p.curToken}
-	expression.Statements = []ast.Statement{}
-	p.nextToken()
-	for !p.curTokenIs(token.RBRACE) {
-		stmt := p.parseStatement()
-		if stmt != nil {
-			expression.Statements = append(expression.Statements, stmt)
-		}
-		if p.peekTokenIs(token.EOF) {
-			break
-		}
-		p.nextToken()
-	}
-	return expression
-}
+

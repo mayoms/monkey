@@ -31,15 +31,6 @@ func (p *Program) String() string {
 	return out.String()
 }
 
-type Identifier struct {
-	Token token.Token
-	Value string
-}
-
-func (i *Identifier) expressionNode()      {}
-func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
-func (i *Identifier) String() string       { return i.Value }
-
 type BlockStatement struct {
 	Token      token.Token
 	Statements []Statement

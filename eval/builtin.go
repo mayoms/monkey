@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"monkey/ast"
 )
 
 var builtins map[string]*Builtin
@@ -87,11 +88,12 @@ func init() {
 				if !ok {
 					return &Error{Message: fmt.Sprintf("unsupported input type %T", args[1])}
 				}
+				fmt.Printf("%T, (%v)\n", block.Literal.Body, block.Literal.Body)
 				a := &Array{}
 				a.Members = []Object{}
 				s := NewScope(nil)
 				for _, argument := range array.Members {
-					s.Set(block.Literal.Parameters[0].Value, argument)
+					s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
 					r := Eval(block.Literal.Body, s)
 					if obj, ok := r.(*ReturnValue); ok {
 						r = obj.Value
@@ -118,7 +120,7 @@ func init() {
 				a.Members = []Object{}
 				s := NewScope(nil)
 				for _, argument := range array.Members {
-					s.Set(block.Literal.Parameters[0].Value, argument)
+					s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
 					r, ok := Eval(block.Literal.Body, s).(*Boolean)
 					if !ok {
 						return &Error{Message: fmt.Sprintf("type error: return value should be boolean. got %T", r)}
