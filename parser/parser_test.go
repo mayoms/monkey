@@ -78,6 +78,30 @@ func TestParsingMethodExpressions(t *testing.T) {
 	}
 }
 
+func TestParsingSliceExpressions(t *testing.T) {
+	input := "myArray[1:3];"
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
+	}
+	testIdentifier(t, indexExp.Left, "myArray")
+	sliceExp, ok := indexExp.Index.(*ast.SliceExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.SliceExpression. got=%T", indexExp.Index)
+	}
+	testIntegerLiteral(t, sliceExp.StartIndex, 1)
+	testIntegerLiteral(t, sliceExp.EndIndex, 3)
+
+}
+
 func TestParsingIndexExpressions(t *testing.T) {
 	input := "myArray[1 + 1]"
 

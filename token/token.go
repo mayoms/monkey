@@ -27,6 +27,7 @@ const (
 	RBRACE   = "}"
 	LBRACKET = "["
 	RBRACKET = "]"
+	COLON    = ":"
 	DOT      = "."
 	ARROW    = "->"
 

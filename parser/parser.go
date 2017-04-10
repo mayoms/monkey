@@ -32,6 +32,7 @@ var precedences = map[token.TokenType]int{
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
 	token.DOT:      METHOD,
+	token.COLON:    INDEX,
 }
 
 type Parser struct {
@@ -89,7 +90,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
-	p.registerInfix(token.DOT, p.parseMethodCallExpressions)
+	p.registerInfix(token.DOT, p.parseMethodCallExpression)
+	p.registerInfix(token.COLON, p.parseSliceExpression)
 	p.nextToken()
 	p.nextToken()
 

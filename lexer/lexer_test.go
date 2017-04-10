@@ -30,6 +30,7 @@ if (5 < 10) {
 [];
 function.call
 { "foo" -> "bar" }
+[1:3]
 `
 
 	tests := []struct {
@@ -124,6 +125,11 @@ function.call
 		{token.ARROW, "->"},
 		{token.STRING, "bar"},
 		{token.RBRACE, "}"},
+		{token.LBRACKET, "["},
+		{token.INT, "1"},
+		{token.COLON, ":"},
+		{token.INT, "3"},
+		{token.RBRACKET, "]"},
 		{token.EOF, ""},
 	}
 

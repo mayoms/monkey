@@ -23,6 +23,26 @@ func (mc *MethodCallExpression) String() string {
 	return out.String()
 }
 
+type SliceExpression struct {
+	Token      token.Token
+	StartIndex Expression
+	EndIndex   Expression
+}
+
+func (se *SliceExpression) expressionNode()      {}
+func (se *SliceExpression) TokenLiteral() string { return se.Token.Literal }
+func (se *SliceExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(se.StartIndex.String())
+	out.WriteString(":")
+	out.WriteString(se.EndIndex.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
 type IndexExpression struct {
 	Token token.Token
 	Left  Expression

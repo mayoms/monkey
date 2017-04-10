@@ -5,6 +5,13 @@ import (
 	"monkey/token"
 )
 
+func (p *Parser) parseSliceExpression(start ast.Expression) ast.Expression {
+	slice := &ast.SliceExpression{Token: p.curToken, StartIndex: start}
+	p.nextToken()
+	slice.EndIndex = p.parseExpression(LOWEST)
+	return slice
+}
+
 func (p *Parser) parseIndexExpression(arr ast.Expression) ast.Expression {
 	indexExp := &ast.IndexExpression{Token: p.curToken, Left: arr}
 	p.nextToken()
