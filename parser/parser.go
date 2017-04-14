@@ -12,6 +12,7 @@ const (
 	LOWEST
 	EQUALS
 	LESSGREATER
+	SLICE
 	SUM
 	PRODUCT
 	PREFIX
@@ -32,7 +33,7 @@ var precedences = map[token.TokenType]int{
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
 	token.DOT:      METHOD,
-	token.COLON:    INDEX,
+	token.COLON:    SLICE,
 }
 
 type Parser struct {

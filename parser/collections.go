@@ -7,19 +7,31 @@ import (
 
 func (p *Parser) parseSliceExpression(start ast.Expression) ast.Expression {
 	slice := &ast.SliceExpression{Token: p.curToken, StartIndex: start}
-	p.nextToken()
-	slice.EndIndex = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.RBRACKET) {
+		slice.EndIndex = nil
+	} else {
+		p.nextToken()
+		slice.EndIndex = p.parseExpression(LOWEST)
+	}
 	return slice
 }
 
 func (p *Parser) parseIndexExpression(arr ast.Expression) ast.Expression {
+	var index ast.Expression
 	indexExp := &ast.IndexExpression{Token: p.curToken, Left: arr}
-	p.nextToken()
-	index := p.parseExpression(LOWEST)
-	if !p.expectPeek(token.RBRACKET) {
-		return nil
+	if p.peekTokenIs(token.COLON) {
+		indexTok := token.Token{Type: token.INT, Literal: "0"}
+		prefix := &ast.IntegerLiteral{Token: indexTok, Value: int64(0)}
+		p.nextToken()
+		index = p.parseSliceExpression(prefix)
+	} else {
+		p.nextToken()
+		index = p.parseExpression(LOWEST)
 	}
 	indexExp.Index = index
+	if p.peekTokenIs(token.RBRACKET) {
+		p.nextToken()
+	}
 	return indexExp
 }
 

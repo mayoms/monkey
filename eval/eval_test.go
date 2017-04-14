@@ -123,6 +123,22 @@ func TestArrayIndexExpressions(t *testing.T) {
 			"[1, 2, 3][-1]",
 			3,
 		},
+		{
+			"let myArray = [1, 2, 3, 4, 5]; let i = myArray[0:]; let mySlice = myArray[1:]; mySlice[0]",
+			2,
+		},
+		{
+			"let myArray = [1, 2, 3, 4, 5]; let i = myArray[0]; let mySlice = myArray[:1]; mySlice[0]",
+			1,
+		},
+		{
+			"let myArray = [1, 2, 3, 4, 5]; let mySlice = myArray[:]; mySlice[0]",
+			1,
+		},
+		{
+			"let myArray = [1, 2, 3, 4, 5];let mySlice = myArray[:]; mySlice[-1]",
+			5,
+		},
 	}
 
 	for _, tt := range tests {
@@ -138,7 +154,6 @@ func TestArrayIndexExpressions(t *testing.T) {
 			} else {
 				t.Errorf("evaluated not array or error. got=%T", evaluated)
 			}
-
 		}
 	}
 }

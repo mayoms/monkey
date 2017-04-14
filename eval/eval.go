@@ -320,24 +320,24 @@ func evalArgs(args []ast.Expression, scope *Scope) []Object {
 	return e
 }
 
-// Index Expressions, i.e. array[0] or hash["mykey"]
+// Index Expressions, i.e. array[0], array[2:4] or hash["mykey"]
 
 func evalIndexExpression(ie *ast.IndexExpression, s *Scope) Object {
 	left := Eval(ie.Left, s)
-	index := Eval(ie.Index, s)
-	if index.Type() == ERROR_OBJ {
-		return index
-	}
 	switch iterable := left.(type) {
 	case *Array:
-		return evalArrayIndex(iterable, index)
+		return evalArrayIndex(iterable, ie, s)
 	case *Hash:
-		return evalHashKeyIndex(iterable, index)
+		return evalHashKeyIndex(iterable, ie, s)
 	}
 	return &Error{Message: fmt.Sprintf("index not supported for type: %s", left.Type())}
 }
 
-func evalHashKeyIndex(hash *Hash, key Object) Object {
+func evalHashKeyIndex(hash *Hash, ie *ast.IndexExpression, s *Scope) Object {
+	key := Eval(ie.Index, s)
+	if key.Type() == ERROR_OBJ {
+		return key
+	}
 	hashable, ok := key.(Hashable)
 	if !ok {
 		return &Error{Message: fmt.Sprintf("key error: %s not hashable", key.Type())}
@@ -349,17 +349,63 @@ func evalHashKeyIndex(hash *Hash, key Object) Object {
 	return hashPair.Value
 }
 
-func evalArrayIndex(array *Array, index Object) Object {
-	idx, ok := index.(*Integer)
-	if !ok {
-		return &Error{Message: fmt.Sprintf("type error: index not integer. got=%s", index.Type())}
-	}
+func evalArraySliceExpression(array *Array, se *ast.SliceExpression, s *Scope) Object {
+	var idx int64
+	var slice int64
 	length := int64(len(array.Members))
-	if idx.Value > length-1 || idx.Value < -length {
-		return &Error{Message: fmt.Sprintf("index %d out of range", idx.Value)}
+
+	startIdx := Eval(se.StartIndex, s)
+	if startIdx.Type() == ERROR_OBJ {
+		return startIdx
 	}
-	if idx.Value < 0 {
-		return array.Members[(length)+idx.Value]
+	idx = startIdx.(*Integer).Value
+	if idx > length-1 {
+		return &Error{Message: fmt.Sprintf("index %d out of range", idx)}
 	}
-	return array.Members[idx.Value]
+	if idx < 0 {
+		idx = length + idx
+	}
+
+	if se.EndIndex == nil {
+		slice = length
+	} else {
+		slIndex := Eval(se.EndIndex, s)
+		if slIndex.Type() == ERROR_OBJ {
+			return slIndex
+		}
+		slice = slIndex.(*Integer).Value
+		if slice > length-1 {
+			return &Error{Message: fmt.Sprintf("slice %d:%d out of range", idx, slice)}
+		}
+		if slice < 0 {
+			slice = length + idx
+		}
+	}
+	if idx == 0 && slice == length {
+		return &Array{Members: array.Members}
+	}
+	if slice == length {
+		return &Array{Members: array.Members[idx:]}
+	}
+	return &Array{Members: array.Members[idx:slice]}
+}
+
+func evalArrayIndex(array *Array, ie *ast.IndexExpression, s *Scope) Object {
+	var idx int64
+	length := int64(len(array.Members))
+	if exp, success := ie.Index.(*ast.SliceExpression); success {
+		return evalArraySliceExpression(array, exp, s)
+	}
+	index := Eval(ie.Index, s)
+	if index.Type() == ERROR_OBJ {
+		return index
+	}
+	idx = index.(*Integer).Value
+	if idx > length-1 {
+		return &Error{Message: fmt.Sprintf("index %d out of range", idx)}
+	}
+	if idx < 0 {
+		idx = length + idx
+	}
+	return array.Members[idx]
 }

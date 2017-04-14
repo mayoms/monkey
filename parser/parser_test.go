@@ -79,27 +79,82 @@ func TestParsingMethodExpressions(t *testing.T) {
 }
 
 func TestParsingSliceExpressions(t *testing.T) {
-	input := "myArray[1:3];"
-
-	l := lexer.New(input)
-	p := New(l)
-
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
-	stmt := program.Statements[0].(*ast.ExpressionStatement)
-	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
-	if !ok {
-		t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
+	tests := []struct {
+		input string
+		start interface{}
+		end   interface{}
+	}{
+		{"myArray[-1:]", -1, nil},
+		{"myArray[1:3];", 1, 3},
+		{"myArray[:3];", 0, 3},
+		{"myArray[1:];", 1, nil},
+		{"myArray[fn(){5}():5]", "fn () { 5 }", 5},
+		{"myArray[a:3];", "a", 3},
+		{"myArray[:-1]", 0, -1},
+		{"myArray[5:fn(){5}()]", 5, "fn () { 5 }"},
+		{"myArray[3:a];", 3, "a"},
+		{"myArray[1 + 1:0];", nil, 0},
+		{"myArray[0:1 + 1];", 0, nil},
 	}
-	testIdentifier(t, indexExp.Left, "myArray")
-	sliceExp, ok := indexExp.Index.(*ast.SliceExpression)
-	if !ok {
-		t.Fatalf("exp not *ast.SliceExpression. got=%T", indexExp.Index)
-	}
-	testIntegerLiteral(t, sliceExp.StartIndex, 1)
-	testIntegerLiteral(t, sliceExp.EndIndex, 3)
 
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		indexExp, ok := stmt.Expression.(*ast.IndexExpression)
+		if !ok {
+			t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
+		}
+		testIdentifier(t, indexExp.Left, "myArray")
+		sliceExp, ok := indexExp.Index.(*ast.SliceExpression)
+		if !ok {
+			t.Fatalf("exp not *ast.SliceExpression. got=%T", indexExp.Index)
+		}
+		switch start := sliceExp.StartIndex.(type) {
+		case *ast.PrefixExpression:
+			s := tt.start.(int)
+			testIntegerLiteral(t, start.Right, int64(-s))
+		case *ast.IntegerLiteral:
+			s := tt.start.(int)
+			testIntegerLiteral(t, start, int64(s))
+		case *ast.CallExpression:
+			s := tt.start.(string)
+			if s != start.Function.String() {
+				t.Fatalf("callExp index not %s. got=%s", s, start)
+			}
+		case *ast.Identifier:
+			s := tt.start.(string)
+			if s != start.String() {
+				t.Fatalf("callExp index not %s. got=%s", s, start)
+			}
+		case *ast.InfixExpression:
+			testInfixExpression(t, start, 1, "+", 1)
+
+		}
+		switch end := sliceExp.EndIndex.(type) {
+		case *ast.PrefixExpression:
+			e := tt.end.(int)
+			testIntegerLiteral(t, end.Right, int64(-e))
+		case *ast.IntegerLiteral:
+			e := tt.end.(int)
+			testIntegerLiteral(t, end, int64(e))
+		case *ast.CallExpression:
+			e := tt.end.(string)
+			if e != end.Function.String() {
+				t.Fatalf("callExp index not %s. got=%s", e, end)
+			}
+		case *ast.Identifier:
+			e := tt.end.(string)
+			if e != end.String() {
+				t.Fatalf("callExp index not %s. got=%s", e, end)
+			}
+		case *ast.InfixExpression:
+			testInfixExpression(t, end, 1, "+", 1)
+		}
+	}
 }
 
 func TestParsingIndexExpressions(t *testing.T) {
