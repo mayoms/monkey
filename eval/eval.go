@@ -1,9 +1,6 @@
 package eval
 
-import (
-	"fmt"
-	"monkey/ast"
-)
+import "monkey/ast"
 
 var (
 	TRUE  = &Boolean{Value: true}
@@ -110,7 +107,7 @@ func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
 	if val, ok := scope.Get(i.String()); ok {
 		return val
 	}
-	return &Error{Message: fmt.Sprintf("unknown identifier: %s", i.String())}
+	return newError(UNKNOWNIDENT, i.String())
 }
 
 func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
@@ -121,7 +118,7 @@ func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
 		if hashable, ok := key.(Hashable); ok {
 			hashMap[hashable.HashKey()] = HashPair{Key: key, Value: Eval(value, scope)}
 		} else {
-			return &Error{Message: fmt.Sprintf("key error: %T not hashable", key.Type())}
+			return newError(KEYERROR, key.Type())
 		}
 	}
 	return &Hash{Pairs: hashMap}
@@ -146,7 +143,7 @@ func evalPrefixExpression(p *ast.PrefixExpression, s *Scope) Object {
 			return i
 		}
 	}
-	return &Error{Message: fmt.Sprintf("unknown operator: %s%s", p.Operator, right.Type())}
+	return newError(PREFIXOP, p.Operator, right.Type())
 }
 
 // Helper for evaluating Bang(!) expressions. Coerces truthyness based on object presence.
@@ -173,7 +170,6 @@ func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 		return right
 	}
 
-	var errMsg string
 	switch {
 	case left.Type() == INTEGER_OBJ && right.Type() == INTEGER_OBJ:
 		return evalIntInfixExpression(i.Operator, left, right)
@@ -183,12 +179,8 @@ func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 		return nativeBoolToBooleanObject(left == right)
 	case i.Operator == "!=":
 		return nativeBoolToBooleanObject(left != right)
-	case left.Type() != right.Type():
-		errMsg = fmt.Sprintf("type mismatch: %s %s %s", left.Type(), i.Operator, right.Type())
-	default:
-		errMsg = fmt.Sprintf("unknown operator: %s %s %s", left.Type(), i.Operator, right.Type())
 	}
-	return &Error{Message: errMsg}
+	return newError(INFIXOP, i.Operator, left.Type(), right.Type())
 }
 
 // Helpers for infix evaluation below
@@ -231,7 +223,7 @@ func evalStringInfixExpression(operator string, left Object, right Object) Objec
 		// TODO: "Hello, + "World" causes some sort of infinite loop
 		return &String{Value: l.Value + r.Value}
 	}
-	return &Error{Message: fmt.Sprintf("unknown operator: %s %s %s", left.Type(), operator, left.Type())}
+	return newError(INFIXOP, operator, l.Type(), r.Type())
 }
 
 // Back to evaluators called directly by Eval
@@ -284,13 +276,13 @@ func evalFunctionCall(call *ast.CallExpression, s *Scope) Object {
 		} else if builtin, ok := builtins[call.Function.String()]; ok {
 			return builtin.Fn(evalArgs(call.Arguments, s)...)
 		} else {
-			return &Error{Message: fmt.Sprintf("unknown identifier: %s", call.Function.String())}
+			return newError(UNKNOWNIDENT, call.Function.String())
 		}
 	}
 	f := fn.(*Function)
 	f.Scope = NewScope(s)
 	args := evalArgs(call.Arguments, f.Scope)
-	// TODO: If the wrong number of params is passed a panic occurs
+	// TODO: If not enough of arguments are passed a panic occur, if too few, no warning or error
 	for i, v := range f.Literal.Parameters {
 		f.Scope.Set(v.String(), args[i])
 	}
@@ -306,13 +298,15 @@ func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Obje
 	obj := Eval(call.Object, scope)
 	method, ok := call.Call.(*ast.CallExpression)
 	if !ok {
-		return &Error{Message: fmt.Sprintf("Method call not *ast.CallExpression. got=%T", call.Call)}
+		return newError(NOMETHODERROR, call.String(), obj.Type())
 	}
 	args := evalArgs(method.Arguments, scope)
 	return obj.CallMethod(method.Function.String(), args)
 }
 
 func evalArgs(args []ast.Expression, scope *Scope) []Object {
+	//TODO: Refactor this to accept the params and args, go ahead and
+	// update scope while looping and return the Scope object.
 	e := []Object{}
 	for _, v := range args {
 		e = append(e, Eval(v, scope))
@@ -330,7 +324,7 @@ func evalIndexExpression(ie *ast.IndexExpression, s *Scope) Object {
 	case *Hash:
 		return evalHashKeyIndex(iterable, ie, s)
 	}
-	return &Error{Message: fmt.Sprintf("index not supported for type: %s", left.Type())}
+	return newError(NOINDEXERROR, left.Type())
 }
 
 func evalHashKeyIndex(hash *Hash, ie *ast.IndexExpression, s *Scope) Object {
@@ -340,9 +334,10 @@ func evalHashKeyIndex(hash *Hash, ie *ast.IndexExpression, s *Scope) Object {
 	}
 	hashable, ok := key.(Hashable)
 	if !ok {
-		return &Error{Message: fmt.Sprintf("key error: %s not hashable", key.Type())}
+		return newError(KEYERROR, key.Type())
 	}
 	hashPair, ok := hash.Pairs[hashable.HashKey()]
+	// TODO: should we return an error here? If not, maybe arrays should return NULL as well?
 	if !ok {
 		return NULL
 	}
@@ -360,10 +355,13 @@ func evalArraySliceExpression(array *Array, se *ast.SliceExpression, s *Scope) O
 	}
 	idx = startIdx.(*Integer).Value
 	if idx > length-1 {
-		return &Error{Message: fmt.Sprintf("index %d out of range", idx)}
+		return newError(INDEXERROR, idx)
 	}
 	if idx < 0 {
 		idx = length + idx
+		if idx > length-1 || idx < 0 {
+			return newError(INDEXERROR, idx)
+		}
 	}
 
 	if se.EndIndex == nil {
@@ -375,10 +373,13 @@ func evalArraySliceExpression(array *Array, se *ast.SliceExpression, s *Scope) O
 		}
 		slice = slIndex.(*Integer).Value
 		if slice > length-1 {
-			return &Error{Message: fmt.Sprintf("slice %d:%d out of range", idx, slice)}
+			return newError(SLICEERROR, idx, slice)
 		}
 		if slice < 0 {
-			slice = length + idx
+			slice = length + slice
+			if slice > length-1 || slice < idx {
+				return newError(SLICEERROR, idx, slice)
+			}
 		}
 	}
 	if idx == 0 && slice == length {
@@ -402,10 +403,13 @@ func evalArrayIndex(array *Array, ie *ast.IndexExpression, s *Scope) Object {
 	}
 	idx = index.(*Integer).Value
 	if idx > length-1 {
-		return &Error{Message: fmt.Sprintf("index %d out of range", idx)}
+		return newError(INDEXERROR, idx)
 	}
 	if idx < 0 {
 		idx = length + idx
+		if idx > length-1 || idx < 0 {
+			return newError(INDEXERROR, idx)
+		}
 	}
 	return array.Members[idx]
 }

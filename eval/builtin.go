@@ -12,7 +12,7 @@ func init() {
 		"len": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 1 {
-					return &Error{Message: fmt.Sprintf("too many arguments. expected=1 got=%d", len(args))}
+					return newError(ARGUMENTERROR, "1", len(args))
 				}
 				switch arg := args[0].(type) {
 				case *String:
@@ -21,7 +21,7 @@ func init() {
 					return &Integer{Value: int64(len(arg.Members))}
 
 				}
-				return &Error{Message: fmt.Sprintf("unsupported type: %T", args[0])}
+				return newError(NOMETHODERROR, "len", args[0].Type())
 			},
 		},
 		"puts": &Builtin{
@@ -34,7 +34,7 @@ func init() {
 			Fn: func(args ...Object) Object {
 				l := len(args)
 				if !(l == 1 || l == 2) {
-					return &Error{Message: fmt.Sprintf("too many arguments. expected=1 or 2. got=%d", len(args))}
+					return newError(ARGUMENTERROR, "1 or 2", len(args))
 				}
 				switch obj := args[0].(type) {
 				case *Array:
@@ -56,7 +56,7 @@ func init() {
 
 				default:
 
-					return &Error{Message: fmt.Sprintf("unsupported type %T", args[0])}
+					return newError(NOMETHODERROR, "pop", args[0].Type())
 				}
 			},
 		},
@@ -64,31 +64,30 @@ func init() {
 			Fn: func(args ...Object) Object {
 				l := len(args)
 				if l != 2 {
-					return &Error{Message: fmt.Sprintf("too many arguments. expected=1. got=%d", len(args))}
+					return newError(ARGUMENTERROR, "1", l-1)
 				}
 				switch obj := args[0].(type) {
 				case *Array:
 					obj.Members = append(obj.Members, args[1])
 					return obj
 				default:
-					return &Error{Message: fmt.Sprintf("unsupported type %T", args[1])}
+					return newError(NOMETHODERROR, "push", args[0].Type())
 				}
 			},
 		},
 		"map": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 2 {
-					return &Error{Message: fmt.Sprintf("too many arguments. expected=2. got=%d", len(args))}
+					return newError(ARGUMENTERROR, "1", len(args)-1)
 				}
 				array, ok := args[0].(*Array)
 				if !ok {
-					return &Error{Message: fmt.Sprintf("unsupported type %T", args[0])}
+					return newError(NOMETHODERROR, "map", args[0].Type())
 				}
 				block, ok := args[1].(*Function)
 				if !ok {
-					return &Error{Message: fmt.Sprintf("unsupported input type %T", args[1])}
+					return newError(INPUTERROR, args[1].Type(), "map")
 				}
-				fmt.Printf("%T, (%v)\n", block.Literal.Body, block.Literal.Body)
 				a := &Array{}
 				a.Members = []Object{}
 				s := NewScope(nil)
@@ -106,15 +105,15 @@ func init() {
 		"filter": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 2 {
-					return &Error{Message: fmt.Sprintf("too many arguments. expected=2. got=%d", len(args))}
+					return newError(ARGUMENTERROR, "1", len(args)-1)
 				}
 				array, ok := args[0].(*Array)
 				if !ok {
-					return &Error{Message: fmt.Sprintf("unsupported type %T", args[0])}
+					return newError(NOMETHODERROR, "filter", args[0].Type())
 				}
 				block, ok := args[1].(*Function)
 				if !ok {
-					return &Error{Message: fmt.Sprintf("unsupported input type %T", args[1])}
+					return newError(INPUTERROR, args[1].Type(), "filter")
 				}
 				a := &Array{}
 				a.Members = []Object{}
@@ -123,7 +122,7 @@ func init() {
 					s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
 					r, ok := Eval(block.Literal.Body, s).(*Boolean)
 					if !ok {
-						return &Error{Message: fmt.Sprintf("type error: return value should be boolean. got %T", r)}
+						return newError(RTERROR, "BOOLEAN")
 					}
 					if r.Value {
 						a.Members = append(a.Members, argument)

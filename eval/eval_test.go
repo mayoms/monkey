@@ -148,7 +148,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 			testIntegerObject(t, evaluated, int64(integer))
 		} else {
 			if err, ok := evaluated.(*Error); ok {
-				if err.Message != "index 3 out of range" {
+				if err.Message != "index error: '3' out of range" {
 					t.Errorf("wrong error message. got=%s", err.Message)
 				}
 			} else {
@@ -226,10 +226,10 @@ func TestBuiltinFunction(t *testing.T) {
 		{`len("four")`, 4},
 		{`len([1, 3, 5])`, 3},
 		{`[1,2,3].len()`, 3},
-		{`"string".plus()`, "No method plus for object STRING"},
-		{`"string".plus`, "Method call not *ast.CallExpression. got=*ast.Identifier"},
-		{`len("one", "two")`, "too many arguments. expected=1 got=2"},
-		{`len(1)`, "unsupported type: *eval.Integer"},
+		{`"string".plus()`, "undefined method 'plus' for object STRING"},
+		{`"string".plus`, "undefined method 'string.plus' for object STRING"},
+		{`len("one", "two")`, "wrong number of arguments. expected=1, got=2"},
+		{`len(1)`, "undefined method 'len' for object INTEGER"},
 	}
 
 	for _, tt := range tests {
@@ -243,7 +243,7 @@ func TestBuiltinFunction(t *testing.T) {
 				t.Errorf("object is not error. got=%T (%+v)", evaluated, evaluated)
 			}
 			if errObj.Message != expected {
-				t.Errorf("wrong error message. expected=%q, got=%q", errObj.Message, expected)
+				t.Errorf("wrong error message. expected=%q, got=%q", expected, errObj.Message)
 			}
 		}
 	}
@@ -342,31 +342,31 @@ func TestErrorHandling(t *testing.T) {
 	}{
 		{
 			"5 + true;",
-			"type mismatch: INTEGER + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types INTEGER and BOOLEAN",
 		},
 		{
 			"5 + true; 5;",
-			"type mismatch: INTEGER + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types INTEGER and BOOLEAN",
 		},
 		{
 			"-true",
-			"unknown operator: -BOOLEAN",
+			"unsupported operator for prefix expression:'-' and type: BOOLEAN",
 		},
 		{
 			"true + false;",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types BOOLEAN and BOOLEAN",
 		},
 		{
 			"true + false + true + false;",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types BOOLEAN and BOOLEAN",
 		},
 		{
 			"5; true + false; 5",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types BOOLEAN and BOOLEAN",
 		},
 		{
 			"if (10 > 1) { true + false; }",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types BOOLEAN and BOOLEAN",
 		},
 		{
 			`
@@ -378,17 +378,17 @@ if (10 > 1) {
   return 1;
 }
 `,
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"unsupported operator for infix expression: '+' and types BOOLEAN and BOOLEAN",
 		},
-		{"foobar", "unknown identifier: foobar"},
-		{`"abc" + 2`, "type mismatch: STRING + INTEGER"},
-		{`"abc" - "abc"`, "unknown operator: STRING - STRING"},
-		{`"abc" * "abc"`, "unknown operator: STRING * STRING"},
-		{`"abc" / "abc"`, "unknown operator: STRING / STRING"},
-		{`"abc" > "abc"`, "unknown operator: STRING > STRING"},
-		{`"abc" < "abc"`, "unknown operator: STRING < STRING"},
-		{`{"name"->"Monkey"}[fn(x) {x}];`, "key error: FUNCTION not hashable"},
-		{`"abc"[0]`, "index not supported for type: STRING"},
+		{"foobar", "unknown identifier: 'foobar' is not defined"},
+		{`"abc" + 2`, "unsupported operator for infix expression: '+' and types STRING and INTEGER"},
+		{`"abc" - "abc"`, "unsupported operator for infix expression: '-' and types STRING and STRING"},
+		{`"abc" * "abc"`, "unsupported operator for infix expression: '*' and types STRING and STRING"},
+		{`"abc" / "abc"`, "unsupported operator for infix expression: '/' and types STRING and STRING"},
+		{`"abc" > "abc"`, "unsupported operator for infix expression: '>' and types STRING and STRING"},
+		{`"abc" < "abc"`, "unsupported operator for infix expression: '<' and types STRING and STRING"},
+		{`{"name"->"Monkey"}[fn(x) {x}];`, "key error: type FUNCTION is not hashable"},
+		{`"abc"[0]`, "index error: type STRING is not indexable"},
 	}
 
 	for _, tt := range tests {

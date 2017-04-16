@@ -40,7 +40,7 @@ func (h *Hash) Inspect() string {
 }
 
 func (h *Hash) CallMethod(method string, args []Object) Object {
-	return &Error{Message: fmt.Sprintf(NOMETHODERROR, method, h.Type())}
+	return newError(NOMETHODERROR, method, h.Type())
 }
 
 func (b *Boolean) HashKey() HashKey {
