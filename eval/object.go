@@ -1,10 +1,8 @@
 package eval
 
 import (
-	"bytes"
 	"fmt"
 	"monkey/ast"
-	"strings"
 )
 
 type ObjectType string
@@ -29,12 +27,6 @@ type Object interface {
 	CallMethod(method string, args []Object) Object
 }
 
-type BuiltinFunc func(args ...Object) Object
-
-type Builtin struct {
-	Fn BuiltinFunc
-}
-
 func (b *Builtin) Inspect() string  { return "builtin function" }
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) CallMethod(method string, args []Object) Object {
@@ -50,32 +42,6 @@ func (f *Function) Inspect() string  { return f.Literal.String() }
 func (r *Function) Type() ObjectType { return FUNCTION_OBJ }
 func (f *Function) CallMethod(method string, args []Object) Object {
 	return newError(NOMETHODERROR, method, f.Type())
-}
-
-type Array struct {
-	Members []Object
-}
-
-func (a *Array) Inspect() string {
-	var out bytes.Buffer
-	members := []string{}
-	for _, m := range a.Members {
-		members = append(members, m.Inspect())
-	}
-	out.WriteString("[")
-	out.WriteString(strings.Join(members, ", "))
-	out.WriteString("]")
-
-	return out.String()
-}
-func (a *Array) Type() ObjectType { return ARRAY_OBJ }
-func (a *Array) CallMethod(method string, args []Object) Object {
-	builtin, ok := builtins[method]
-	if !ok {
-		return newError(NOMETHODERROR, method, a.Type())
-	}
-	args = append([]Object{a}, args...)
-	return builtin.Fn(args...)
 }
 
 type ReturnValue struct{ Value Object }
