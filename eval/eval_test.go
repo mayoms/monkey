@@ -198,7 +198,7 @@ func TestArrayMethods(t *testing.T) {
 		{`[1,2,3].pop(2)`, 3},
 		{`let a = [1,2,3].push(4);a.pop()`, 4},
 		{`let a = [1,2,3].pop(1)`, 2},
-		{`let a = [1,2,3]; a.pop(1); a.len()`, 2},
+		{`let a = [1,2,3]; a.pop(1); len(a)`, 2},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -225,7 +225,7 @@ func TestBuiltinFunction(t *testing.T) {
 		{`len("")`, 0},
 		{`len("four")`, 4},
 		{`len([1, 3, 5])`, 3},
-		{`[1,2,3].len()`, 3},
+		{`len([1,2,3])`, 3},
 		{`"string".plus()`, "undefined method 'plus' for object STRING"},
 		{`"string".plus`, "undefined method 'string.plus' for object STRING"},
 		{`len("one", "two")`, "wrong number of arguments. expected=1, got=2"},

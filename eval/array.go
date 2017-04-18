@@ -46,9 +46,8 @@ func (a *Array) methods() Object {
 
 var arrayMethods = map[string]func(a *Array, args ...Object) Object{
 	"pop": func(a *Array, args ...Object) Object {
-		l := len(args)
-		if l == 0 {
-			last := len(a.Members) - 1
+		last := len(a.Members) - 1
+		if len(args) == 0 {
 			if last < 0 {
 				return newError(INDEXERROR, last)
 			}
@@ -56,14 +55,15 @@ var arrayMethods = map[string]func(a *Array, args ...Object) Object{
 			a.Members = a.Members[:last]
 			return popped
 		}
-		idx := args[1].(*Integer).Value
-		if idx == 1 {
-			popped, shifted := a.Members[0], a.Members[1:]
-			a.Members = shifted
-			return popped
+		idx := args[0].(*Integer).Value
+		if idx < 0 {
+			idx = idx + int64(last+1)
+		}
+		if idx < 0 || idx > int64(last) {
+			return newError(INDEXERROR, idx)
 		}
 		popped := a.Members[idx]
-		a.Members = append(a.Members[:idx], a.Members[idx+1:]...)
+		a.Members = append(a.Members[:idx], a.Members[idx:]...)
 		return popped
 	},
 	"push": func(a *Array, args ...Object) Object {
