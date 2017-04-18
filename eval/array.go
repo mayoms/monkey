@@ -63,7 +63,7 @@ var arrayMethods = map[string]func(a *Array, args ...Object) Object{
 			return newError(INDEXERROR, idx)
 		}
 		popped := a.Members[idx]
-		a.Members = append(a.Members[:idx], a.Members[idx:]...)
+		a.Members = append(a.Members[:idx], a.Members[idx+1:]...)
 		return popped
 	},
 	"push": func(a *Array, args ...Object) Object {
