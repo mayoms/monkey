@@ -45,6 +45,50 @@ func (a *Array) methods() Object {
 }
 
 var arrayMethods = map[string]func(a *Array, args ...Object) Object{
+	"filter": func(a *Array, args ...Object) Object {
+		if len(args) != 1 {
+			return newError(ARGUMENTERROR, "1", len(args))
+		}
+		block, ok := args[0].(*Function)
+		if !ok {
+			return newError(INPUTERROR, args[0].Type(), "filter")
+		}
+		arr := &Array{}
+		arr.Members = []Object{}
+		s := NewScope(nil)
+		for _, argument := range a.Members {
+			s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
+			r, ok := Eval(block.Literal.Body, s).(*Boolean)
+			if !ok {
+				return newError(RTERROR, "BOOLEAN")
+			}
+			if r.Value {
+				arr.Members = append(arr.Members, argument)
+			}
+		}
+		return arr
+	},
+	"map": func(a *Array, args ...Object) Object {
+		if len(args) != 1 {
+			return newError(ARGUMENTERROR, "1", len(args))
+		}
+		block, ok := args[0].(*Function)
+		if !ok {
+			return newError(INPUTERROR, args[0].Type(), "map")
+		}
+		arr := &Array{}
+		arr.Members = []Object{}
+		s := NewScope(nil)
+		for _, argument := range a.Members {
+			s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
+			r := Eval(block.Literal.Body, s)
+			if obj, ok := r.(*ReturnValue); ok {
+				r = obj.Value
+			}
+			arr.Members = append(arr.Members, r)
+		}
+		return arr
+	},
 	"pop": func(a *Array, args ...Object) Object {
 		last := len(a.Members) - 1
 		if len(args) == 0 {
@@ -73,49 +117,5 @@ var arrayMethods = map[string]func(a *Array, args ...Object) Object{
 		}
 		a.Members = append(a.Members, args[0])
 		return a
-	},
-	"map": func(a *Array, args ...Object) Object {
-		if len(args) != 1 {
-			return newError(ARGUMENTERROR, "1", len(args))
-		}
-		block, ok := args[0].(*Function)
-		if !ok {
-			return newError(INPUTERROR, args[0].Type(), "map")
-		}
-		arr := &Array{}
-		arr.Members = []Object{}
-		s := NewScope(nil)
-		for _, argument := range a.Members {
-			s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
-			r := Eval(block.Literal.Body, s)
-			if obj, ok := r.(*ReturnValue); ok {
-				r = obj.Value
-			}
-			arr.Members = append(arr.Members, r)
-		}
-		return arr
-	},
-	"filter": func(a *Array, args ...Object) Object {
-		if len(args) != 1 {
-			return newError(ARGUMENTERROR, "1", len(args))
-		}
-		block, ok := args[0].(*Function)
-		if !ok {
-			return newError(INPUTERROR, args[0].Type(), "filter")
-		}
-		arr := &Array{}
-		arr.Members = []Object{}
-		s := NewScope(nil)
-		for _, argument := range a.Members {
-			s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
-			r, ok := Eval(block.Literal.Body, s).(*Boolean)
-			if !ok {
-				return newError(RTERROR, "BOOLEAN")
-			}
-			if r.Value {
-				arr.Members = append(arr.Members, argument)
-			}
-		}
-		return arr
 	},
 }
