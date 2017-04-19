@@ -45,6 +45,29 @@ func (a *Array) methods() Object {
 }
 
 var arrayMethods = map[string]func(a *Array, args ...Object) Object{
+	"count": func(a *Array, args ...Object) Object {
+		if len(args) < 1 || len(args) > 1 {
+			return newError(ARGUMENTERROR, "1", len(args))
+		}
+		count := 0
+		for _, v := range a.Members {
+			switch c := args[0].(type) {
+			case *Integer:
+				if c.Value == v.(*Integer).Value {
+					count++
+				}
+			case *String:
+				if c.Value == v.(*String).Value {
+					count++
+				}
+			default:
+				if c == v {
+					count++
+				}
+			}
+		}
+		return &Integer{Value: int64(count)}
+	},
 	"filter": func(a *Array, args ...Object) Object {
 		if len(args) != 1 {
 			return newError(ARGUMENTERROR, "1", len(args))

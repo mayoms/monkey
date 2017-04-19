@@ -184,7 +184,7 @@ func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 }
 
 // Helpers for infix evaluation below
-
+//TODO: [] == [] is false. change.
 func evalIntInfixExpression(operator string, left Object, right Object) Object {
 	l := left.(*Integer)
 	r := right.(*Integer)
