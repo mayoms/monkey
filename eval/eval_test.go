@@ -14,6 +14,10 @@ func TestStringIndexExpressions(t *testing.T) {
 		{`"string"[0]`, "s"},
 		{`"string"[-1]`, "g"},
 		{`"string"[2]`, "r"},
+		{`"string"[0:]`, "string"},
+		{`"string"[1:]`, "tring"},
+		{`"string"[2:5]`, "rin"},
+		{`"string"[-5:-1]`, "trin"},
 	}
 
 	for _, tt := range tests {

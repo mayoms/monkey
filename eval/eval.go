@@ -333,8 +333,7 @@ func evalStringIndex(str *String, ie *ast.IndexExpression, s *Scope) Object {
 	var idx int64
 	length := int64(len(str.Value))
 	if exp, success := ie.Index.(*ast.SliceExpression); success {
-		return newError(NOINDEXERROR, exp.String())
-		// return evalArraySliceExpression(array, exp, s)
+		return evalStringSliceExpression(str, exp, s)
 	}
 	index := Eval(ie.Index, s)
 	if index.Type() == ERROR_OBJ {
@@ -351,6 +350,53 @@ func evalStringIndex(str *String, ie *ast.IndexExpression, s *Scope) Object {
 		}
 	}
 	return &String{Value: string(str.Value[idx])}
+}
+
+func evalStringSliceExpression(str *String, se *ast.SliceExpression, s *Scope) Object {
+	var idx int64
+	var slice int64
+	length := int64(len(str.Value))
+
+	startIdx := Eval(se.StartIndex, s)
+	if startIdx.Type() == ERROR_OBJ {
+		return startIdx
+	}
+	idx = startIdx.(*Integer).Value
+	if idx > length-1 {
+		return newError(INDEXERROR, idx)
+	}
+	if idx < 0 {
+		idx = length + idx
+		if idx > length-1 || idx < 0 {
+			return newError(INDEXERROR, idx)
+		}
+	}
+
+	if se.EndIndex == nil {
+		slice = length
+	} else {
+		slIndex := Eval(se.EndIndex, s)
+		if slIndex.Type() == ERROR_OBJ {
+			return slIndex
+		}
+		slice = slIndex.(*Integer).Value
+		if slice > length-1 {
+			return newError(SLICEERROR, idx, slice)
+		}
+		if slice < 0 {
+			slice = length + slice
+			if slice > length-1 || slice < idx {
+				return newError(SLICEERROR, idx, slice)
+			}
+		}
+	}
+	if idx == 0 && slice == length {
+		return str
+	}
+	if slice == length {
+		return &String{Value: string(str.Value[idx:])}
+	}
+	return &String{Value: string(str.Value[idx:slice])}
 }
 
 func evalHashKeyIndex(hash *Hash, ie *ast.IndexExpression, s *Scope) Object {
@@ -409,7 +455,7 @@ func evalArraySliceExpression(array *Array, se *ast.SliceExpression, s *Scope) O
 		}
 	}
 	if idx == 0 && slice == length {
-		return &Array{Members: array.Members}
+		return array
 	}
 	if slice == length {
 		return &Array{Members: array.Members[idx:]}
