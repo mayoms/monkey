@@ -1,6 +1,9 @@
 package eval
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type BuiltinFunc func(args ...Object) Object
 
@@ -12,6 +15,36 @@ var builtins map[string]*Builtin
 
 func init() {
 	builtins = map[string]*Builtin{
+		"int": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				switch input := args[0].(type) {
+				case *Integer:
+					return input
+				case *String:
+					n, err := strconv.Atoi(input.Value)
+					if err != nil {
+						return newError(INPUTERROR, "STRING: "+input.Value, "int")
+					}
+					return &Integer{Value: int64(n)}
+				}
+				return newError(INPUTERROR, args[0].Type(), "int")
+			},
+		},
+		"str": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				switch input := args[0].(type) {
+				default:
+					return &String{Value: input.Inspect()}
+				}
+				return newError(INPUTERROR, args[0].Type(), "str")
+			},
+		},
 		"len": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 1 {

@@ -91,6 +91,28 @@ var arrayMethods = map[string]func(a *Array, args ...Object) Object{
 		}
 		return arr
 	},
+	"index": func(a *Array, args ...Object) Object {
+		if len(args) < 1 || len(args) > 1 {
+			return newError(ARGUMENTERROR, "1", len(args))
+		}
+		for i, v := range a.Members {
+			switch c := args[0].(type) {
+			case *Integer:
+				if c.Value == v.(*Integer).Value {
+					return &Integer{Value: int64(i)}
+				}
+			case *String:
+				if c.Value == v.(*String).Value {
+					return &Integer{Value: int64(i)}
+				}
+			default:
+				if c == v {
+					return &Integer{Value: int64(i)}
+				}
+			}
+		}
+		return NULL
+	},
 	"map": func(a *Array, args ...Object) Object {
 		if len(args) != 1 {
 			return newError(ARGUMENTERROR, "1", len(args))

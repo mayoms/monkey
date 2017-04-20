@@ -230,6 +230,19 @@ func TestBuiltinFunction(t *testing.T) {
 		{`"string".plus`, "undefined method 'string.plus' for object STRING"},
 		{`len("one", "two")`, "wrong number of arguments. expected=1, got=2"},
 		{`len(1)`, "undefined method 'len' for object INTEGER"},
+		{`int("1")`, 1},
+		{`int("100")`, 100},
+		{`int(1)`, 1},
+		{`int("one")`, `unsupported input type 'STRING: one' for function or method int`},
+		{`int([])`, `unsupported input type 'ARRAY' for function or method int`},
+		{`int({})`, `unsupported input type 'HASH' for function or method int`},
+		{`str(1)`, "1"},
+		{`str(true)`, `true`},
+		{`str(false)`, `false`},
+		{`str("string")`, `string`},
+		{`str("one")`, `one`},
+		{`str([])`, `[]`},
+		{`str({})`, `{}`},
 	}
 
 	for _, tt := range tests {
@@ -238,12 +251,17 @@ func TestBuiltinFunction(t *testing.T) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
 		case string:
-			errObj, ok := evaluated.(*Error)
-			if !ok {
+			switch s := evaluated.(type) {
+			case *Boolean:
+
+			case *String:
+				testStringObject(t, evaluated, expected)
+			case *Error:
+				if s.Message != expected {
+					t.Errorf("wrong error message. expected=%q, got=%q", expected, s.Message)
+				}
+			default:
 				t.Errorf("object is not error. got=%T (%+v)", evaluated, evaluated)
-			}
-			if errObj.Message != expected {
-				t.Errorf("wrong error message. expected=%q, got=%q", expected, errObj.Message)
 			}
 		}
 	}
