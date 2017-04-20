@@ -1,5 +1,7 @@
 package eval
 
+import "bytes"
+
 type String struct{ Value string }
 
 func (s *String) Inspect() string  { return `"` + s.Value + `"` }
@@ -41,5 +43,20 @@ var stringMethods = map[string]func(s *String, args ...Object) Object{
 			}
 		}
 		return NULL
+	},
+	"reverse": func(s *String, args ...Object) Object {
+		if len(args) != 0 {
+			return newError(ARGUMENTERROR, "0", len(args))
+		}
+
+		end := len(s.Value) - 1
+		if end < 1 {
+			return s
+		}
+		var out bytes.Buffer
+		for i := range s.Value {
+			out.WriteByte(s.Value[end-i])
+		}
+		return &String{Value: out.String()}
 	},
 }

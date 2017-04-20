@@ -21,6 +21,10 @@ func TestStringMethods(t *testing.T) {
 		{`"string".find("")`, NULL},
 		{`"string".find(1)`, newError(INPUTERROR, INTEGER_OBJ, "find")},
 		{`"string".find([])`, newError(INPUTERROR, ARRAY_OBJ, "find")},
+		{`"string".reverse()`, "gnirts"},
+		{`"".reverse()`, ""},
+		{`"ab".reverse()`, "ba"},
+		{`"".reverse(1)`, newError(ARGUMENTERROR, "0", 1)},
 	}
 
 	for _, tt := range tests {
@@ -30,6 +34,8 @@ func TestStringMethods(t *testing.T) {
 			testIntegerObject(t, evaluated, int64(expected))
 		case *Null:
 			testNullObject(t, expected)
+		case string:
+			testStringObject(t, evaluated, expected)
 		case *Error:
 			if evaluated.(*Error).Message != expected.Message {
 				t.Fatalf("wrong error message. expected=%s, got=%s", expected.Message, evaluated.(*Error).Message)
