@@ -62,7 +62,7 @@ func (i *Integer) CallMethod(method string, args []Object) Object {
 
 type String struct{ Value string }
 
-func (s *String) Inspect() string  { return s.Value }
+func (s *String) Inspect() string  { return `"` + s.Value + `"` }
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) CallMethod(method string, args []Object) Object {
 	builtin, ok := builtins[method]

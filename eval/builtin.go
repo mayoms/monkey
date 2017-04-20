@@ -39,6 +39,8 @@ func init() {
 					return newError(ARGUMENTERROR, "1", len(args))
 				}
 				switch input := args[0].(type) {
+				case *String:
+					return input
 				default:
 					return &String{Value: input.Inspect()}
 				}
