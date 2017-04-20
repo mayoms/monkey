@@ -66,5 +66,13 @@ func init() {
 				return NULL
 			},
 		},
+		"type": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				return &String{Value: fmt.Sprintf("%s", args[0].Type())}
+			},
+		},
 	}
 }
