@@ -323,8 +323,34 @@ func evalIndexExpression(ie *ast.IndexExpression, s *Scope) Object {
 		return evalArrayIndex(iterable, ie, s)
 	case *Hash:
 		return evalHashKeyIndex(iterable, ie, s)
+	case *String:
+		return evalStringIndex(iterable, ie, s)
 	}
 	return newError(NOINDEXERROR, left.Type())
+}
+
+func evalStringIndex(str *String, ie *ast.IndexExpression, s *Scope) Object {
+	var idx int64
+	length := int64(len(str.Value))
+	if exp, success := ie.Index.(*ast.SliceExpression); success {
+		return newError(NOINDEXERROR, exp.String())
+		// return evalArraySliceExpression(array, exp, s)
+	}
+	index := Eval(ie.Index, s)
+	if index.Type() == ERROR_OBJ {
+		return index
+	}
+	idx = index.(*Integer).Value
+	if idx > length-1 {
+		return newError(INDEXERROR, idx)
+	}
+	if idx < 0 {
+		idx = length + idx
+		if idx > length-1 || idx < 0 {
+			return newError(INDEXERROR, idx)
+		}
+	}
+	return &String{Value: string(str.Value[idx])}
 }
 
 func evalHashKeyIndex(hash *Hash, ie *ast.IndexExpression, s *Scope) Object {

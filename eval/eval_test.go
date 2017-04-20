@@ -6,6 +6,22 @@ import (
 	"testing"
 )
 
+func TestStringIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"string"[0]`, "s"},
+		{`"string"[-1]`, "g"},
+		{`"string"[2]`, "r"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testStringObject(t, evaluated, tt.expected)
+	}
+}
+
 func TestHashIndexExpressions(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -406,7 +422,6 @@ if (10 > 1) {
 		{`"abc" > "abc"`, "unsupported operator for infix expression: '>' and types STRING and STRING"},
 		{`"abc" < "abc"`, "unsupported operator for infix expression: '<' and types STRING and STRING"},
 		{`{"name"->"Monkey"}[fn(x) {x}];`, "key error: type FUNCTION is not hashable"},
-		{`"abc"[0]`, "index error: type STRING is not indexable"},
 	}
 
 	for _, tt := range tests {
