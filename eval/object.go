@@ -60,19 +60,6 @@ func (i *Integer) CallMethod(method string, args []Object) Object {
 	return newError(NOMETHODERROR, method, i.Type())
 }
 
-type String struct{ Value string }
-
-func (s *String) Inspect() string  { return `"` + s.Value + `"` }
-func (s *String) Type() ObjectType { return STRING_OBJ }
-func (s *String) CallMethod(method string, args []Object) Object {
-	builtin, ok := builtins[method]
-	if !ok {
-		return newError(NOMETHODERROR, method, s.Type())
-	}
-	args = append([]Object{s}, args...)
-	return builtin.Fn(args...)
-}
-
 type Boolean struct{ Value bool }
 
 func (b *Boolean) Inspect() string  { return fmt.Sprintf("%v", b.Value) }

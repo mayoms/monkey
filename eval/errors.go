@@ -28,7 +28,7 @@ var errorType = map[int]string{
 	INDEXERROR:    "index error: '%d' out of range",
 	SLICEERROR:    "index error: slice '%d:%d' out of range",
 	ARGUMENTERROR: "wrong number of arguments. expected=%s, got=%d",
-	INPUTERROR:    "unsupported input type '%s' for function or method %s",
+	INPUTERROR:    "unsupported input type '%s' for function or method: %s",
 	RTERROR:       "return type should be %s.",
 }
 

@@ -6,6 +6,37 @@ import (
 	"testing"
 )
 
+func TestStringMethods(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`"string".find("s")`, 0},
+		{`"string".find("string")`, 0},
+		{`"string".find("g")`, 5},
+		{`"string".find("tr")`, 1},
+		{`"string".find("ng")`, 4},
+		{`"string".find("x")`, NULL},
+		{`"".find("stringstring")`, NULL},
+		{`"string".find("")`, NULL},
+		{`"string".find(1)`, newError(INPUTERROR, INTEGER_OBJ, "find")},
+		{`"string".find([])`, newError(INPUTERROR, ARRAY_OBJ, "find")},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case *Null:
+			testNullObject(t, expected)
+		case *Error:
+			if evaluated.(*Error).Message != expected.Message {
+				t.Fatalf("wrong error message. expected=%s, got=%s", expected.Message, evaluated.(*Error).Message)
+			}
+		}
+	}
+}
 func TestStringIndexExpressions(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -253,9 +284,9 @@ func TestBuiltinFunction(t *testing.T) {
 		{`int("1")`, 1},
 		{`int("100")`, 100},
 		{`int(1)`, 1},
-		{`int("one")`, `unsupported input type 'STRING: one' for function or method int`},
-		{`int([])`, `unsupported input type 'ARRAY' for function or method int`},
-		{`int({})`, `unsupported input type 'HASH' for function or method int`},
+		{`int("one")`, `unsupported input type 'STRING: one' for function or method: int`},
+		{`int([])`, `unsupported input type 'ARRAY' for function or method: int`},
+		{`int({})`, `unsupported input type 'HASH' for function or method: int`},
 		{`str(1)`, "1"},
 		{`str(true)`, `true`},
 		{`str(false)`, `false`},
