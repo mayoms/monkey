@@ -218,10 +218,10 @@ func (s *String) Split(args ...Object) Object {
 			stop = i
 			a.Members = append(a.Members, &String{Value: s.Value[start:stop]})
 			for p := 0; p < dl; p++ {
+				i++
 				if s.Value[p] != del[p%dl] {
 					start = i
 				}
-				i++
 			}
 			if start < i {
 				start = stop + 1
