@@ -29,6 +29,9 @@ func TestStringMethods(t *testing.T) {
 		{`"abc".upper()`, "ABC"},
 		{`"a b c".upper()`, "A B C"},
 		{`"a%b!c".upper()`, "A%B!C"},
+		{`"ABC".lower()`, "abc"},
+		{`"A B C".lower()`, "a b c"},
+		{`"A%B!C".lower()`, "a%b!c"},
 	}
 
 	for _, tt := range tests {

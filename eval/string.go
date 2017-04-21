@@ -44,6 +44,23 @@ var stringMethods = map[string]func(s *String, args ...Object) Object{
 		}
 		return NULL
 	},
+	"lower": func(s *String, args ...Object) Object {
+		if len(args) != 0 {
+			return newError(ARGUMENTERROR, "0", len(args))
+		}
+		if s.Value == "" {
+			return s
+		}
+		var out bytes.Buffer
+		for _, ch := range s.Value {
+			if 'A' <= ch && ch <= 'Z' {
+				out.WriteRune(ch + 32)
+				continue
+			}
+			out.WriteRune(ch)
+		}
+		return &String{Value: out.String()}
+	},
 	"reverse": func(s *String, args ...Object) Object {
 		if len(args) != 0 {
 			return newError(ARGUMENTERROR, "0", len(args))
