@@ -2,7 +2,9 @@ package eval
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
+	"strings"
 )
 
 type BuiltinFunc func(args ...Object) Object
@@ -60,6 +62,22 @@ func init() {
 
 				}
 				return newError(NOMETHODERROR, "len", args[0].Type())
+			},
+		},
+		"methods": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				methods := &Array{}
+				t := reflect.TypeOf(args[0])
+				for i := 0; i < t.NumMethod(); i++ {
+					m := t.Method(i).Name
+					if !(m == "Type" || m == "CallMethod" || m == "HashKey" || m == "Inspect") {
+						methods.Members = append(methods.Members, &String{Value: strings.ToLower(m)})
+					}
+				}
+				return methods
 			},
 		},
 		"puts": &Builtin{

@@ -33,6 +33,7 @@ func TestStringMethods(t *testing.T) {
 		{`"A B C".lower()`, "a b c"},
 		{`"A%B!C".lower()`, "a%b!c"},
 		{`" string".lstrip()`, "string"},
+		{`"strsing".lstrip("s")`, "trsing"},
 		{`" 	".lstrip()`, ""},
 		{`"
 			string".lstrip()`, "string"},
@@ -40,6 +41,22 @@ func TestStringMethods(t *testing.T) {
 		{`"string".lstrip("s")`, "tring"},
 		{`"string".lstrip("st")`, "ring"},
 		{`"ststring".lstrip("st")`, "ring"},
+		{`"string ".rstrip()`, "string"},
+		{`"` + string('\r') + string('\n') + "	 " + `".rstrip()`, ""},
+		{`"string".rstrip()`, "string"},
+		{`"string".rstrip("g")`, "strin"},
+		{`"strging".rstrip("g")`, "strgin"},
+		{`"string".rstrip("ng")`, "stri"},
+		{`"string
+			".rstrip()`, "string"},
+		// strip just calls lstrip and rstrip consecutively, we can
+		// have fewer tests here since the above is pretty comprehensive
+		// just make sure it calls both
+		{`" string ".strip()`, "string"},
+		{`"ssstringss".strip("s")`, "tring"},
+		{`let s = "1 2 3".split(); s[0] + s[1] + s[2]`, "123"},
+		{`let s = "1,2,3".split(","); s[0] + s[1] + s[2]`, "123"},
+		{`let s = "1&_2&_3&_".split("&_"); s[0] + s[1] + s[2] + s[3]`, "123"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
