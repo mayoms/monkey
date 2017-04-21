@@ -59,4 +59,21 @@ var stringMethods = map[string]func(s *String, args ...Object) Object{
 		}
 		return &String{Value: out.String()}
 	},
+	"upper": func(s *String, args ...Object) Object {
+		if len(args) != 0 {
+			return newError(ARGUMENTERROR, "0", len(args))
+		}
+		if s.Value == "" {
+			return s
+		}
+		var out bytes.Buffer
+		for _, ch := range s.Value {
+			if 'a' <= ch && ch <= 'z' {
+				out.WriteRune(ch - 32)
+				continue
+			}
+			out.WriteRune(ch)
+		}
+		return &String{Value: out.String()}
+	},
 }

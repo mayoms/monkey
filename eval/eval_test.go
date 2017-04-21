@@ -25,6 +25,10 @@ func TestStringMethods(t *testing.T) {
 		{`"".reverse()`, ""},
 		{`"ab".reverse()`, "ba"},
 		{`"".reverse(1)`, newError(ARGUMENTERROR, "0", 1)},
+		{`"".upper()`, ""},
+		{`"abc".upper()`, "ABC"},
+		{`"a b c".upper()`, "A B C"},
+		{`"a%b!c".upper()`, "A%B!C"},
 	}
 
 	for _, tt := range tests {
