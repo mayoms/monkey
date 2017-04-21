@@ -27,6 +27,8 @@ func (s *String) CallMethod(method string, args []Object) Object {
 		return s.Strip(args...)
 	case "split":
 		return s.Split(args...)
+	case "replace":
+		return s.Replace(args...)
 	}
 	return newError(NOMETHODERROR, method, s.Type())
 }
@@ -135,6 +137,42 @@ func (s *String) Reverse(args ...Object) Object {
 	var out bytes.Buffer
 	for i := range s.Value {
 		out.WriteByte(s.Value[end-i])
+	}
+	return &String{Value: out.String()}
+}
+
+func (s *String) Replace(args ...Object) Object {
+	if len(args) != 2 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+
+	mObj, ok := args[0].(*String)
+	if !ok {
+		return newError(INPUTERROR, args[0].Type(), "rstrip")
+	}
+	mStr := mObj.Value
+
+	rObj, ok := args[1].(*String)
+	if !ok {
+		return newError(INPUTERROR)
+	}
+	rStr := rObj.Value
+
+	var out bytes.Buffer
+	sl := len(s.Value)
+	ml := len(mStr)
+
+	for i := 0; i < sl; i++ {
+		if i+ml > sl {
+			out.WriteString(s.Value[i:])
+			break
+		}
+		if s.Value[i:i+ml] == mStr {
+			out.WriteString(rStr)
+			i += ml - 1
+		} else {
+			out.WriteByte(s.Value[i])
+		}
 	}
 	return &String{Value: out.String()}
 }

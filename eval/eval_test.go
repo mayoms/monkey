@@ -57,6 +57,9 @@ func TestStringMethods(t *testing.T) {
 		{`let s = "1 2 3".split(); s[0] + s[1] + s[2]`, "123"},
 		{`let s = "1,2,3".split(","); s[0] + s[1] + s[2]`, "123"},
 		{`let s = "1&_2&_3&_".split("&_"); s[0] + s[1] + s[2] + s[3]`, "123"},
+		{`"abc".replace("a", "A")`, "Abc"},
+		{`"this is a story and this story tells the story of this".replace("this","that")`, "that is a story and that story tells the story of that"},
+		{`" A B C ".replace(" ", "!")`, "!A!B!C!"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
