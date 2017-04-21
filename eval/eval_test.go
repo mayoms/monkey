@@ -63,7 +63,7 @@ func TestStringMethods(t *testing.T) {
 		{`"eee".count("e")`, 3},
 		{`"These are the days of summer".count("e")`, 5},
 		{`"These are the days of summer".count(" ")`, 5},
-		{`" ".join(["a", "b", "c"`, "a b c"},
+		{`" ".join(["a", "b", "c"])`, "a b c"},
 		{`"!".join(["a", "b", "c"])`, "a!b!c"},
 	}
 	for _, tt := range tests {

@@ -25,142 +25,142 @@ func (a *Array) Inspect() string {
 func (a *Array) Type() ObjectType { return ARRAY_OBJ }
 
 func (a *Array) CallMethod(method string, args []Object) Object {
-	if method == "methods" {
-		return a.methods()
+	switch method {
+	case "count":
+		return a.count(args...)
+	case "filter":
+		return a.filter(args...)
+	case "index":
+		return a.index(args...)
+	case "map":
+		return a._map(args...)
+	case "push":
+		return a.push(args...)
+	case "pop":
+		return a.pop(args...)
 	}
-	m, ok := arrayMethods[method]
+	return newError(NOMETHODERROR, a.Type(), method)
+}
+
+func (a *Array) count(args ...Object) Object {
+	if len(args) < 1 || len(args) > 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+	count := 0
+	for _, v := range a.Members {
+		switch c := args[0].(type) {
+		case *Integer:
+			if c.Value == v.(*Integer).Value {
+				count++
+			}
+		case *String:
+			if c.Value == v.(*String).Value {
+				count++
+			}
+		default:
+			if c == v {
+				count++
+			}
+		}
+	}
+	return &Integer{Value: int64(count)}
+}
+
+func (a *Array) filter(args ...Object) Object {
+	if len(args) != 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+	block, ok := args[0].(*Function)
 	if !ok {
-		return newError(NOMETHODERROR, method, a.Type())
+		return newError(INPUTERROR, args[0].Type(), "filter")
 	}
-	return m(a, args...)
+	arr := &Array{}
+	arr.Members = []Object{}
+	s := NewScope(nil)
+	for _, argument := range a.Members {
+		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
+		r, ok := Eval(block.Literal.Body, s).(*Boolean)
+		if !ok {
+			return newError(RTERROR, "BOOLEAN")
+		}
+		if r.Value {
+			arr.Members = append(arr.Members, argument)
+		}
+	}
+	return arr
 }
 
-func (a *Array) methods() Object {
-	methods := &Array{}
-	for key, _ := range arrayMethods {
-		m := &String{Value: key}
-		methods.Members = append(methods.Members, m)
+func (a *Array) index(args ...Object) Object {
+	if len(args) < 1 || len(args) > 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
 	}
-	return methods
+	for i, v := range a.Members {
+		switch c := args[0].(type) {
+		case *Integer:
+			if c.Value == v.(*Integer).Value {
+				return &Integer{Value: int64(i)}
+			}
+		case *String:
+			if c.Value == v.(*String).Value {
+				return &Integer{Value: int64(i)}
+			}
+		default:
+			if c == v {
+				return &Integer{Value: int64(i)}
+			}
+		}
+	}
+	return NULL
+}
+func (a *Array) _map(args ...Object) Object {
+	if len(args) != 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+	block, ok := args[0].(*Function)
+	if !ok {
+		return newError(INPUTERROR, args[0].Type(), "map")
+	}
+	arr := &Array{}
+	arr.Members = []Object{}
+	s := NewScope(nil)
+	for _, argument := range a.Members {
+		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
+		r := Eval(block.Literal.Body, s)
+		if obj, ok := r.(*ReturnValue); ok {
+			r = obj.Value
+		}
+		arr.Members = append(arr.Members, r)
+	}
+	return arr
 }
 
-var arrayMethods = map[string]func(a *Array, args ...Object) Object{
-	"count": func(a *Array, args ...Object) Object {
-		if len(args) < 1 || len(args) > 1 {
-			return newError(ARGUMENTERROR, "1", len(args))
+func (a *Array) pop(args ...Object) Object {
+	last := len(a.Members) - 1
+	if len(args) == 0 {
+		if last < 0 {
+			return newError(INDEXERROR, last)
 		}
-		count := 0
-		for _, v := range a.Members {
-			switch c := args[0].(type) {
-			case *Integer:
-				if c.Value == v.(*Integer).Value {
-					count++
-				}
-			case *String:
-				if c.Value == v.(*String).Value {
-					count++
-				}
-			default:
-				if c == v {
-					count++
-				}
-			}
-		}
-		return &Integer{Value: int64(count)}
-	},
-	"filter": func(a *Array, args ...Object) Object {
-		if len(args) != 1 {
-			return newError(ARGUMENTERROR, "1", len(args))
-		}
-		block, ok := args[0].(*Function)
-		if !ok {
-			return newError(INPUTERROR, args[0].Type(), "filter")
-		}
-		arr := &Array{}
-		arr.Members = []Object{}
-		s := NewScope(nil)
-		for _, argument := range a.Members {
-			s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
-			r, ok := Eval(block.Literal.Body, s).(*Boolean)
-			if !ok {
-				return newError(RTERROR, "BOOLEAN")
-			}
-			if r.Value {
-				arr.Members = append(arr.Members, argument)
-			}
-		}
-		return arr
-	},
-	"index": func(a *Array, args ...Object) Object {
-		if len(args) < 1 || len(args) > 1 {
-			return newError(ARGUMENTERROR, "1", len(args))
-		}
-		for i, v := range a.Members {
-			switch c := args[0].(type) {
-			case *Integer:
-				if c.Value == v.(*Integer).Value {
-					return &Integer{Value: int64(i)}
-				}
-			case *String:
-				if c.Value == v.(*String).Value {
-					return &Integer{Value: int64(i)}
-				}
-			default:
-				if c == v {
-					return &Integer{Value: int64(i)}
-				}
-			}
-		}
-		return NULL
-	},
-	"map": func(a *Array, args ...Object) Object {
-		if len(args) != 1 {
-			return newError(ARGUMENTERROR, "1", len(args))
-		}
-		block, ok := args[0].(*Function)
-		if !ok {
-			return newError(INPUTERROR, args[0].Type(), "map")
-		}
-		arr := &Array{}
-		arr.Members = []Object{}
-		s := NewScope(nil)
-		for _, argument := range a.Members {
-			s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
-			r := Eval(block.Literal.Body, s)
-			if obj, ok := r.(*ReturnValue); ok {
-				r = obj.Value
-			}
-			arr.Members = append(arr.Members, r)
-		}
-		return arr
-	},
-	"pop": func(a *Array, args ...Object) Object {
-		last := len(a.Members) - 1
-		if len(args) == 0 {
-			if last < 0 {
-				return newError(INDEXERROR, last)
-			}
-			popped := a.Members[last]
-			a.Members = a.Members[:last]
-			return popped
-		}
-		idx := args[0].(*Integer).Value
-		if idx < 0 {
-			idx = idx + int64(last+1)
-		}
-		if idx < 0 || idx > int64(last) {
-			return newError(INDEXERROR, idx)
-		}
-		popped := a.Members[idx]
-		a.Members = append(a.Members[:idx], a.Members[idx+1:]...)
+		popped := a.Members[last]
+		a.Members = a.Members[:last]
 		return popped
-	},
-	"push": func(a *Array, args ...Object) Object {
-		l := len(args)
-		if l != 1 {
-			return newError(ARGUMENTERROR, "1", l)
-		}
-		a.Members = append(a.Members, args[0])
-		return a
-	},
+	}
+	idx := args[0].(*Integer).Value
+	if idx < 0 {
+		idx = idx + int64(last+1)
+	}
+	if idx < 0 || idx > int64(last) {
+		return newError(INDEXERROR, idx)
+	}
+	popped := a.Members[idx]
+	a.Members = append(a.Members[:idx], a.Members[idx+1:]...)
+	return popped
+}
+
+func (a *Array) push(args ...Object) Object {
+	l := len(args)
+	if l != 1 {
+		return newError(ARGUMENTERROR, "1", l)
+	}
+	a.Members = append(a.Members, args[0])
+	return a
 }
