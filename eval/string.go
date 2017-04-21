@@ -29,8 +29,41 @@ func (s *String) CallMethod(method string, args []Object) Object {
 		return s.Split(args...)
 	case "replace":
 		return s.Replace(args...)
+	case "count":
+		return s.Count(args...)
 	}
 	return newError(NOMETHODERROR, method, s.Type())
+}
+
+func (s *String) Count(args ...Object) Object {
+	if len(args) != 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+	sub, ok := args[0].(*String)
+	if !ok {
+		return newError(INPUTERROR, args[0].Type(), "find")
+	}
+	subl := len(sub.Value)
+	strl := len(s.Value)
+	if subl == 0 || strl == 0 {
+		return NULL
+	}
+	if subl > strl {
+		return NULL
+	}
+	if s.Value == sub.Value {
+		return &Integer{Value: 1}
+	}
+	count := 0
+	for i := range s.Value {
+		if s.Value[i:i+subl] == sub.Value {
+			count++
+		}
+		if i+subl > strl {
+			break
+		}
+	}
+	return &Integer{Value: int64(count)}
 }
 
 func (s *String) Find(args ...Object) Object {

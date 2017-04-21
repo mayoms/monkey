@@ -60,6 +60,9 @@ func TestStringMethods(t *testing.T) {
 		{`"abc".replace("a", "A")`, "Abc"},
 		{`"this is a story and this story tells the story of this".replace("this","that")`, "that is a story and that story tells the story of that"},
 		{`" A B C ".replace(" ", "!")`, "!A!B!C!"},
+		{`"eee".count("e")`, 3},
+		{`"These are the days of summer".count("e")`, 5},
+		{`"These are the days of summer".count(" ")`, 5},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
