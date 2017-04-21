@@ -31,6 +31,8 @@ func (s *String) CallMethod(method string, args []Object) Object {
 		return s.Replace(args...)
 	case "count":
 		return s.Count(args...)
+	case "join":
+		return s.Join(args...)
 	}
 	return newError(NOMETHODERROR, method, s.Type())
 }
@@ -41,7 +43,7 @@ func (s *String) Count(args ...Object) Object {
 	}
 	sub, ok := args[0].(*String)
 	if !ok {
-		return newError(INPUTERROR, args[0].Type(), "find")
+		return newError(INPUTERROR, args[0].Type(), "count")
 	}
 	subl := len(sub.Value)
 	strl := len(s.Value)
@@ -96,6 +98,31 @@ func (s *String) Find(args ...Object) Object {
 	return NULL
 }
 
+func (s *String) Join(args ...Object) Object {
+	if len(args) != 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+
+	a, ok := args[0].(*Array)
+	if !ok {
+		return newError(INPUTERROR, args[0].Type(), "join")
+	}
+
+	var out bytes.Buffer
+	l := len(a.Members)
+	for i, str := range a.Members {
+		j, ok := str.(*String)
+		if !ok {
+			return newError(INPUTERROR, str.Type(), "join")
+		}
+		out.WriteString(j.Value)
+		if i != l-1 {
+			out.WriteString(s.Value)
+		}
+	}
+	return &String{Value: out.String()}
+}
+
 func (s *String) Lower(args ...Object) Object {
 	if len(args) != 0 {
 		return newError(ARGUMENTERROR, "0", len(args))
@@ -124,7 +151,7 @@ func (s *String) Lstrip(args ...Object) Object {
 	if len(args) == 1 {
 		sObj, ok := args[0].(*String)
 		if !ok {
-			return newError(INPUTERROR, args[0].Type(), "rstrip")
+			return newError(INPUTERROR, args[0].Type(), "lstrip")
 		}
 		substr = sObj.Value
 		subl = len(substr)
@@ -181,13 +208,13 @@ func (s *String) Replace(args ...Object) Object {
 
 	mObj, ok := args[0].(*String)
 	if !ok {
-		return newError(INPUTERROR, args[0].Type(), "rstrip")
+		return newError(INPUTERROR, args[0].Type(), "replace")
 	}
 	mStr := mObj.Value
 
 	rObj, ok := args[1].(*String)
 	if !ok {
-		return newError(INPUTERROR)
+		return newError(INPUTERROR, args[0].Type(), "replace")
 	}
 	rStr := rObj.Value
 
