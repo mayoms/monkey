@@ -32,8 +32,15 @@ func TestStringMethods(t *testing.T) {
 		{`"ABC".lower()`, "abc"},
 		{`"A B C".lower()`, "a b c"},
 		{`"A%B!C".lower()`, "a%b!c"},
+		{`" string".lstrip()`, "string"},
+		{`" 	".lstrip()`, ""},
+		{`"
+			string".lstrip()`, "string"},
+		{`"` + string('\r') + `string".lstrip()`, "string"},
+		{`"string".lstrip("s")`, "tring"},
+		{`"string".lstrip("st")`, "ring"},
+		{`"ststring".lstrip("st")`, "ring"},
 	}
-
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		switch expected := tt.expected.(type) {
@@ -674,7 +681,7 @@ func testStringObject(t *testing.T, obj Object, expected string) bool {
 		return false
 	}
 	if result.Value != expected {
-		t.Errorf("object has wrong value. got=%s, want=%s", result.Value, expected)
+		t.Errorf("object has wrong value. got='%s', want='%s'", result.Value, expected)
 		return false
 	}
 	return true
