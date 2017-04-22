@@ -112,7 +112,6 @@ func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
 
 func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
 	hashMap := make(map[HashKey]HashPair)
-	// TODO: { 1 -> true, 2 -> "five", "three"-> "four } causes some sort of infinite loop
 	for key, value := range hl.Pairs {
 		key := Eval(key, scope)
 		if hashable, ok := key.(Hashable); ok {
@@ -220,7 +219,6 @@ func evalStringInfixExpression(operator string, left Object, right Object) Objec
 	case "!=":
 		return nativeBoolToBooleanObject(l.Value != r.Value)
 	case "+":
-		// TODO: "Hello, + "World" causes some sort of infinite loop
 		return &String{Value: l.Value + r.Value}
 	}
 	return newError(INFIXOP, operator, l.Type(), r.Type())

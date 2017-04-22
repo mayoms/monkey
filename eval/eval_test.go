@@ -366,6 +366,12 @@ func TestBuiltinFunction(t *testing.T) {
 		{`str("one")`, `one`},
 		{`str([])`, `[]`},
 		{`str({})`, `{}`},
+		{`type([])`, ARRAY_OBJ},
+		{`type({})`, HASH_OBJ},
+		{`type("")`, STRING_OBJ},
+		{`type(true)`, BOOLEAN_OBJ},
+		{`type(fn(x){x})`, FUNCTION_OBJ},
+		{`type(1)`, INTEGER_OBJ},
 	}
 
 	for _, tt := range tests {

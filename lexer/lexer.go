@@ -1,6 +1,9 @@
 package lexer
 
-import "monkey/token"
+import (
+	"errors"
+	"monkey/token"
+)
 
 type Lexer struct {
 	input        string
@@ -102,9 +105,11 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readNumber()
 			return tok
 		} else if isQuote(l.ch) {
-			tok.Type = token.STRING
-			tok.Literal = l.readString()
-			return tok
+			if s, err := l.readString(); err == nil {
+				tok.Type = token.STRING
+				tok.Literal = s
+				return tok
+			}
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
 	}
@@ -116,7 +121,7 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
 
-func (l *Lexer) readString() string {
+func (l *Lexer) readString() (string, error) {
 	start := l.position + 1
 	for {
 		l.readChar()
@@ -124,9 +129,13 @@ func (l *Lexer) readString() string {
 			l.readChar()
 			break
 		}
+		if l.ch == 0 {
+			err := errors.New("")
+			return "", err
+		}
 	}
 
-	return l.input[start : l.position-1]
+	return l.input[start : l.position-1], nil
 }
 
 func (l *Lexer) readIdentifier() string {
