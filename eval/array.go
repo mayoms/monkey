@@ -34,6 +34,8 @@ func (a *Array) CallMethod(method string, args []Object) Object {
 		return a.Index(args...)
 	case "map":
 		return a.Map(args...)
+	case "merge":
+		return a.Merge(args...)
 	case "push":
 		return a.Push(args...)
 	case "pop":
@@ -121,7 +123,6 @@ func (a *Array) Map(args ...Object) Object {
 		return newError(INPUTERROR, args[0].Type(), "map")
 	}
 	arr := &Array{}
-	arr.Members = []Object{}
 	s := NewScope(nil)
 	for _, argument := range a.Members {
 		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, argument)
@@ -130,6 +131,24 @@ func (a *Array) Map(args ...Object) Object {
 			r = obj.Value
 		}
 		arr.Members = append(arr.Members, r)
+	}
+	return arr
+}
+
+func (a *Array) Merge(args ...Object) Object {
+	if len(args) != 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+	m, ok := args[0].(*Array)
+	if !ok {
+		return newError(INPUTERROR, args[0].Type(), "map")
+	}
+	arr := &Array{}
+	for _, v := range a.Members {
+		arr.Members = append(arr.Members, v)
+	}
+	for _, v := range m.Members {
+		arr.Members = append(arr.Members, v)
 	}
 	return arr
 }
