@@ -284,6 +284,33 @@ func TestFunctionalMethods(t *testing.T) {
 	}
 }
 
+func TestHashMethods(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`{1->"a", 2->"b"}.pop(1)`, "a"},
+		{`let a = {1->"a", 2->"b"}; a.pop(1); str(a)`, `{2-> "b"}`},
+		{`let a = {1->"a", 2->"b"}.push(3, "c"); a[3]`, `c`},
+		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); c[3]`, `c`},
+		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); str(a[3])`, `null`},
+		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); str(b[1])`, `null`},
+		{`let a = {"a"->1}.map(fn(k, v){ {k.upper()->v+1} } ); str(a)`, `{"A"-> 2}`},
+		{`let a = {"a"->1, "b"->2}.filter(fn(k, v){ v > 1 } ); str(a)`, `{"b"-> 2}`},
+		{`str({"a"->1}.keys())`, `["a"]`},
+		{`str({"a"->1}.values())`, `[1]`},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case string:
+			testStringObject(t, evaluated, expected)
+		}
+	}
+}
+
 func TestArrayMethods(t *testing.T) {
 	tests := []struct {
 		input    string
