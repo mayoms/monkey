@@ -205,8 +205,18 @@ func evalIntInfixExpression(operator string, left Object, right Object) Object {
 		return nativeBoolToBooleanObject(l.Value == r.Value)
 	case "!=":
 		return nativeBoolToBooleanObject(l.Value != r.Value)
+	case "%":
+		return evalModuloExpression(l, r)
 	}
 	return NULL
+}
+
+func evalModuloExpression(left *Integer, right *Integer) Object {
+	mod := left.Value % right.Value
+	if mod < 0 {
+		mod += right.Value
+	}
+	return &Integer{Value: mod}
 }
 
 func evalStringInfixExpression(operator string, left Object, right Object) Object {

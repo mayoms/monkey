@@ -31,6 +31,7 @@ if (5 < 10) {
 function.call
 { "foo" -> "bar" }
 [1:3]
+5 % 4
 `
 
 	tests := []struct {
@@ -130,6 +131,9 @@ function.call
 		{token.COLON, ":"},
 		{token.INT, "3"},
 		{token.RBRACKET, "]"},
+		{token.INT, "5"},
+		{token.MOD, "%"},
+		{token.INT, "4"},
 		{token.EOF, ""},
 	}
 
