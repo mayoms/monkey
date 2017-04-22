@@ -27,22 +27,22 @@ func (a *Array) Type() ObjectType { return ARRAY_OBJ }
 func (a *Array) CallMethod(method string, args []Object) Object {
 	switch method {
 	case "count":
-		return a.count(args...)
+		return a.Count(args...)
 	case "filter":
-		return a.filter(args...)
+		return a.Filter(args...)
 	case "index":
-		return a.index(args...)
+		return a.Index(args...)
 	case "map":
-		return a._map(args...)
+		return a.Map(args...)
 	case "push":
-		return a.push(args...)
+		return a.Push(args...)
 	case "pop":
-		return a.pop(args...)
+		return a.Pop(args...)
 	}
 	return newError(NOMETHODERROR, a.Type(), method)
 }
 
-func (a *Array) count(args ...Object) Object {
+func (a *Array) Count(args ...Object) Object {
 	if len(args) < 1 || len(args) > 1 {
 		return newError(ARGUMENTERROR, "1", len(args))
 	}
@@ -66,7 +66,7 @@ func (a *Array) count(args ...Object) Object {
 	return &Integer{Value: int64(count)}
 }
 
-func (a *Array) filter(args ...Object) Object {
+func (a *Array) Filter(args ...Object) Object {
 	if len(args) != 1 {
 		return newError(ARGUMENTERROR, "1", len(args))
 	}
@@ -90,7 +90,7 @@ func (a *Array) filter(args ...Object) Object {
 	return arr
 }
 
-func (a *Array) index(args ...Object) Object {
+func (a *Array) Index(args ...Object) Object {
 	if len(args) < 1 || len(args) > 1 {
 		return newError(ARGUMENTERROR, "1", len(args))
 	}
@@ -112,7 +112,7 @@ func (a *Array) index(args ...Object) Object {
 	}
 	return NULL
 }
-func (a *Array) _map(args ...Object) Object {
+func (a *Array) Map(args ...Object) Object {
 	if len(args) != 1 {
 		return newError(ARGUMENTERROR, "1", len(args))
 	}
@@ -134,7 +134,7 @@ func (a *Array) _map(args ...Object) Object {
 	return arr
 }
 
-func (a *Array) pop(args ...Object) Object {
+func (a *Array) Pop(args ...Object) Object {
 	last := len(a.Members) - 1
 	if len(args) == 0 {
 		if last < 0 {
@@ -156,7 +156,7 @@ func (a *Array) pop(args ...Object) Object {
 	return popped
 }
 
-func (a *Array) push(args ...Object) Object {
+func (a *Array) Push(args ...Object) Object {
 	l := len(args)
 	if l != 1 {
 		return newError(ARGUMENTERROR, "1", l)
