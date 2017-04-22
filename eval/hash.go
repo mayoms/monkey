@@ -48,6 +48,8 @@ func (h *Hash) CallMethod(method string, args []Object) Object {
 		return h.Keys(args...)
 	case "map":
 		return h.Map(args...)
+	case "merge":
+		return h.Merge(args...)
 	case "pop":
 		return h.Pop(args...)
 	case "push":
@@ -143,6 +145,24 @@ func (h *Hash) Map(args ...Object) Object {
 		for _, v := range rh.Pairs {
 			hash.Push(v.Key, v.Value)
 		}
+	}
+	return hash
+}
+
+func (h *Hash) Merge(args ...Object) Object {
+	if len(args) != 1 {
+		return newError(ARGUMENTERROR, "1", len(args))
+	}
+	m, ok := args[0].(*Hash)
+	if !ok {
+		return newError(ARGUMENTERROR, args[0].Type(), "hash.merge")
+	}
+	hash := &Hash{Pairs: make(map[HashKey]HashPair)}
+	for _, v := range h.Pairs {
+		hash.Push(v.Key, v.Value)
+	}
+	for _, v := range m.Pairs {
+		hash.Push(v.Key, v.Value)
 	}
 	return hash
 }
