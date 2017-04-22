@@ -141,7 +141,7 @@ func (a *Array) Merge(args ...Object) Object {
 	}
 	m, ok := args[0].(*Array)
 	if !ok {
-		return newError(INPUTERROR, args[0].Type(), "map")
+		return newError(INPUTERROR, args[0].Type(), "array.merge")
 	}
 	arr := &Array{}
 	for _, v := range a.Members {
