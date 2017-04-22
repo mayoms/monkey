@@ -295,6 +295,12 @@ func TestArrayMethods(t *testing.T) {
 		{`let a = [1,2,3].push(4);a.pop()`, 4},
 		{`let a = [1,2,3].pop(1)`, 2},
 		{`let a = [1,2,3]; a.pop(1); len(a)`, 2},
+		{`let a = [1,2,3].filter(fn(x) { x > 1}); str(a)`, `[2, 3]`},
+		{`let a = [1,2,3].map(fn(x) { x + 1}); str(a)`, `[2, 3, 4]`},
+		{`let a = [1,2,3].merge([4]); str(a)`, `[1, 2, 3, 4]`},
+		{`let a = ["a","b","c","d"].map(fn(x){ x.upper() }); str(a)`, `["A", "B", "C", "D"]`},
+		{`["a","b","c","d"].index("d")`, 3},
+		{`[1,1,1,2,3].count(1)`, 3},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -302,13 +308,7 @@ func TestArrayMethods(t *testing.T) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
 		case string:
-			errObj, ok := evaluated.(*Error)
-			if !ok {
-				t.Errorf("object is not error. got=%T (%+v)", evaluated, evaluated)
-			}
-			if errObj.Message != expected {
-				t.Errorf("wrong error message. expected=%q, got=%q", errObj.Message, expected)
-			}
+			testStringObject(t, evaluated, expected)
 		}
 	}
 }
