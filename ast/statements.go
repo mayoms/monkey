@@ -56,3 +56,20 @@ func (ls *LetStatement) String() string {
 
 	return out.String()
 }
+
+type IncludeStatement struct {
+	Token      token.Token
+	ImportFile Expression
+}
+
+func (is *IncludeStatement) statementNode()       {}
+func (is *IncludeStatement) TokenLiteral() string { return is.Token.Literal }
+func (is *IncludeStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(is.TokenLiteral())
+	out.WriteString(" ")
+	out.WriteString(is.ImportFile.String())
+
+	return out.String()
+}

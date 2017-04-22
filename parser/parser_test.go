@@ -247,6 +247,36 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func TestIncludeStatements(t *testing.T) {
+	tests := []struct {
+		input         string
+		expectedValue string
+	}{
+		{"include tests", "tests"},
+		{"include stdlib", "stdlib"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.IncludeStatement)
+		if !ok {
+			t.Fatalf("statement is not *ast.IncludeStatement. got=%T", program.Statements[0])
+		}
+		if !testLiteralExpression(t, stmt.ImportFile, tt.expectedValue) {
+			return
+		}
+	}
+}
+
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 	if s.TokenLiteral() != "let" {
 		t.Errorf("s.Tokenliteral not 'let'. got=%q", s.TokenLiteral())

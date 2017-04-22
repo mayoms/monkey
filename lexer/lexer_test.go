@@ -32,6 +32,7 @@ function.call
 { "foo" -> "bar" }
 [1:3]
 5 % 4
+include tests
 `
 
 	tests := []struct {
@@ -135,6 +136,8 @@ function.call
 		{token.MOD, "%"},
 		{token.INT, "4"},
 		{token.EOF, ""},
+		{token.INCLUDE, "include"},
+		{token.IDENT, "tests"},
 	}
 
 	l := New(input)

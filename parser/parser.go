@@ -121,6 +121,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLetStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.INCLUDE:
+		return p.parseIncludeStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
