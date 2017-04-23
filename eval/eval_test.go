@@ -6,6 +6,19 @@ import (
 	"testing"
 )
 
+func TestIncludeObjects(t *testing.T) {
+	input := "include strings"
+	evaluated := testEval(input)
+	results, ok := evaluated.(*IncludedObject)
+	if !ok {
+		t.Fatalf("object is not includedObject. got=%T", evaluated)
+	}
+	if results.Name != "strings" {
+		t.Fatalf("included name not 'strings' got=%s", results.Name)
+	}
+
+}
+
 func TestStringMethods(t *testing.T) {
 	tests := []struct {
 		input    string

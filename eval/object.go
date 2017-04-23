@@ -19,6 +19,7 @@ const (
 	BUILTIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
+	INCLUDED_OBJ     = "INCLUDE"
 )
 
 type Object interface {
@@ -31,6 +32,17 @@ func (b *Builtin) Inspect() string  { return "builtin function" }
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) CallMethod(method string, args []Object) Object {
 	return newError(NOMETHODERROR, method, b.Type())
+}
+
+type IncludedObject struct {
+	Name  string
+	Scope *Scope
+}
+
+func (io *IncludedObject) Inspect() string  { return fmt.Sprintf("included object: %s", io.Name) }
+func (io *IncludedObject) Type() ObjectType { return INCLUDED_OBJ }
+func (io *IncludedObject) CallMethod(method string, args []Object) Object {
+	return newError(NOMETHODERROR, method, io.Type())
 }
 
 type Function struct {

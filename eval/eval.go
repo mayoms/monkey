@@ -14,6 +14,8 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalProgram(node, scope)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, scope)
+	case *ast.IncludeStatement:
+		return evalIncludeStatement(node, scope)
 	case *ast.LetStatement:
 		return evalLetStatement(node, scope)
 	case *ast.ReturnStatement:
@@ -66,6 +68,11 @@ func evalProgram(program *ast.Program, scope *Scope) (results Object) {
 }
 
 // Statements...
+func evalIncludeStatement(i *ast.IncludeStatement, s *Scope) Object {
+	imported := &IncludedObject{Name: i.ImportFile.String(), Scope: NewScope(nil)}
+	s.Set(i.ImportFile.String(), imported)
+	return imported
+}
 
 func evalLetStatement(l *ast.LetStatement, scope *Scope) (val Object) {
 	if val = Eval(l.Value, scope); val.Type() != ERROR_OBJ {
