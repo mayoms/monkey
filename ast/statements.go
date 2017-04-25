@@ -58,8 +58,10 @@ func (ls *LetStatement) String() string {
 }
 
 type IncludeStatement struct {
-	Token      token.Token
-	ImportFile Expression
+	Token       token.Token
+	IncludePath Expression
+	IsModule    bool
+	Program     *Program
 }
 
 func (is *IncludeStatement) statementNode()       {}
@@ -69,7 +71,7 @@ func (is *IncludeStatement) String() string {
 
 	out.WriteString(is.TokenLiteral())
 	out.WriteString(" ")
-	out.WriteString(is.ImportFile.String())
+	out.WriteString(is.IncludePath.String())
 
 	return out.String()
 }

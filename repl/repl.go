@@ -26,6 +26,11 @@ func Start(out io.Writer) {
 	}
 
 	scope := eval.NewScope(nil)
+	wd, err := os.Getwd()
+	if err != nil {
+		io.WriteString(out, err.Error())
+		os.Exit(1)
+	}
 	for {
 		if line, err := l.Prompt(PROMPT); err == nil {
 			if line == "exit" {
@@ -37,7 +42,7 @@ func Start(out io.Writer) {
 			}
 			l.AppendHistory(line)
 			lex := lexer.New(line)
-			p := parser.New(lex)
+			p := parser.New(lex, wd)
 			program := p.ParseProgram()
 			if len(p.Errors()) != 0 {
 				printParserErrors(out, p.Errors())

@@ -12,6 +12,7 @@ type Node interface {
 
 type Program struct {
 	Statements []Statement
+	Includes   map[string]*IncludeStatement
 }
 
 func (p *Program) TokenLiteral() string {

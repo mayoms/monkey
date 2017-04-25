@@ -29,7 +29,7 @@ var errorType = map[int]string{
 	SLICEERROR:    "index error: slice '%d:%d' out of range",
 	ARGUMENTERROR: "wrong number of arguments. expected=%s, got=%d",
 	INPUTERROR:    "unsupported input type '%s' for function or method: %s",
-	RTERROR:       "return type should be %s.",
+	RTERROR:       "return type should be %s",
 }
 
 func newError(t int, args ...interface{}) Object {

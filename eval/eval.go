@@ -1,12 +1,17 @@
 package eval
 
-import "monkey/ast"
+import (
+	"monkey/ast"
+	"os"
+)
 
 var (
 	TRUE  = &Boolean{Value: true}
 	FALSE = &Boolean{Value: false}
 	NULL  = &Null{}
 )
+
+var includeScope *Scope
 
 func Eval(node ast.Node, scope *Scope) Object {
 	switch node := node.(type) {
@@ -55,6 +60,7 @@ func Eval(node ast.Node, scope *Scope) Object {
 // Program Evaluation Entry Point Functions, and Helpers:
 
 func evalProgram(program *ast.Program, scope *Scope) (results Object) {
+	loadIncludes(program.Includes, scope)
 	for _, statement := range program.Statements {
 		results = Eval(statement, scope)
 		switch s := results.(type) {
@@ -64,13 +70,41 @@ func evalProgram(program *ast.Program, scope *Scope) (results Object) {
 			return s
 		}
 	}
-	return
+	if results == nil {
+		return NULL
+	}
+	return results
+}
+
+func loadIncludes(includes map[string]*ast.IncludeStatement, s *Scope) {
+	if includeScope == nil {
+		includeScope = NewScope(nil)
+	}
+	for _, p := range includes {
+		Eval(p, s)
+	}
 }
 
 // Statements...
 func evalIncludeStatement(i *ast.IncludeStatement, s *Scope) Object {
-	imported := &IncludedObject{Name: i.ImportFile.String(), Scope: NewScope(nil)}
-	s.Set(i.ImportFile.String(), imported)
+	if i.IsModule {
+		return evalProgram(i.Program, s)
+	}
+	imported := &IncludedObject{Name: i.IncludePath.String(), Scope: NewScope(nil)}
+
+	// capture stdout to suppress output during evaluating import
+	so := os.Stdout
+	_, w, _ := os.Pipe()
+	os.Stdout = w
+	if _, ok := includeScope.Get(i.IncludePath.String()); !ok {
+		evalProgram(i.Program, imported.Scope)
+		includeScope.Set(i.IncludePath.String(), imported)
+	}
+
+	// restore stdout
+	w.Close()
+	os.Stdout = so
+
 	return imported
 }
 
@@ -111,10 +145,13 @@ func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
 
 // Identifier not a literal, but felt logicially like it belonged here.. Literal expressions continue below
 func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
-	if val, ok := scope.Get(i.String()); ok {
-		return val
+	val, ok := scope.Get(i.String())
+	if !ok {
+		if val, ok = includeScope.Get(i.String()); !ok {
+			return newError(UNKNOWNIDENT, i.String())
+		}
 	}
-	return newError(UNKNOWNIDENT, i.String())
+	return val
 }
 
 func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
@@ -311,12 +348,27 @@ func evalFunctionCall(call *ast.CallExpression, s *Scope) Object {
 // Method calls for builtin Objects
 func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Object {
 	obj := Eval(call.Object, scope)
-	method, ok := call.Call.(*ast.CallExpression)
-	if !ok {
-		return newError(NOMETHODERROR, call.String(), obj.Type())
+	switch m := obj.(type) {
+	case *IncludedObject:
+		switch o := call.Call.(type) {
+		case *ast.Identifier:
+			if o, ok := m.Scope.Get(call.Call.String()); ok {
+				return o
+			}
+		case *ast.CallExpression:
+			if o.Function.String() == "Scope" {
+				return obj.CallMethod("Scope", []Object{})
+			}
+			return evalFunctionCall(o, m.Scope)
+		}
+	default:
+		if method, ok := call.Call.(*ast.CallExpression); ok {
+			args := evalArgs(method.Arguments, scope)
+			return obj.CallMethod(method.Function.String(), args)
+		}
 	}
-	args := evalArgs(method.Arguments, scope)
-	return obj.CallMethod(method.Function.String(), args)
+	return newError(NOMETHODERROR, call.String(), obj.Type())
+
 }
 
 func evalArgs(args []ast.Expression, scope *Scope) []Object {

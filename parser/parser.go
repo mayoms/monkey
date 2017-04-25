@@ -40,6 +40,7 @@ var precedences = map[token.TokenType]int{
 type Parser struct {
 	l      *lexer.Lexer
 	errors []string
+	path   string
 
 	curToken  token.Token
 	peekToken token.Token
@@ -61,10 +62,11 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
 
-func New(l *lexer.Lexer) *Parser {
+func New(l *lexer.Lexer, wd string) *Parser {
 	p := &Parser{
 		l:      l,
 		errors: []string{},
+		path:   wd,
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
@@ -104,11 +106,19 @@ func New(l *lexer.Lexer) *Parser {
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
+	program.Includes = make(map[string]*ast.IncludeStatement)
 
 	for p.curToken.Type != token.EOF {
 		stmt := p.parseStatement()
 		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
+			if include, ok := stmt.(*ast.IncludeStatement); ok {
+				_, ok := program.Includes[include.IncludePath.String()]
+				if !ok {
+					program.Includes[include.IncludePath.String()] = include
+				}
+			} else {
+				program.Statements = append(program.Statements, stmt)
+			}
 		}
 		p.nextToken()
 	}
