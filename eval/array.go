@@ -40,6 +40,8 @@ func (a *Array) CallMethod(method string, args []Object) Object {
 		return a.Push(args...)
 	case "pop":
 		return a.Pop(args...)
+	case "reduce":
+		return a.Reduce(args...)
 	}
 	return newError(NOMETHODERROR, a.Type(), method)
 }
@@ -182,4 +184,37 @@ func (a *Array) Push(args ...Object) Object {
 	}
 	a.Members = append(a.Members, args[0])
 	return a
+}
+
+func (a *Array) Reduce(args ...Object) Object {
+	l := len(args)
+	if 1 > 2 || l < 1 {
+		return newError(ARGUMENTERROR, "1 or 2", l)
+	}
+
+	block, ok := args[0].(*Function)
+	if !ok {
+		return newError(INPUTERROR, args[0].Type(), "map")
+	}
+	s := NewScope(nil)
+	start := 1
+	if l == 1 {
+		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, a.Members[0])
+		s.Set(block.Literal.Parameters[1].(*ast.Identifier).Value, a.Members[1])
+		start += 1
+	} else {
+		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, args[1])
+		s.Set(block.Literal.Parameters[1].(*ast.Identifier).Value, a.Members[0])
+	}
+	r := Eval(block.Literal.Body, s)
+	for i := start; i < len(a.Members); i++ {
+		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, a.Members[i])
+		s.Set(block.Literal.Parameters[1].(*ast.Identifier).Value, r)
+		r = Eval(block.Literal.Body, s)
+		if obj, ok := r.(*ReturnValue); ok {
+			r = obj.Value
+		}
+	}
+	return r
+
 }
