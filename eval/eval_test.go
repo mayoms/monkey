@@ -362,6 +362,9 @@ func TestArrayMethods(t *testing.T) {
 		{`let a = ["a","b","c","d"].map(fn(x){ x.upper() }); str(a)`, `["A", "B", "C", "D"]`},
 		{`["a","b","c","d"].index("d")`, 3},
 		{`[1,1,1,2,3].count(1)`, 3},
+		{`[1,2,3,4,5].reduce(fn(x, y) { x + y})`, 15},
+		{`str([[0,1],[2,3],[4,5]].reduce(fn(acc, val) { acc.merge(val) }))`, "[0, 1, 2, 3, 4, 5]"},
+		{`str([[0,1],[2,3],[4,5]].reduce(fn(acc, val) { acc.merge(val) },[]))`, "[0, 1, 2, 3, 4, 5]"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)

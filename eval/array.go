@@ -208,8 +208,8 @@ func (a *Array) Reduce(args ...Object) Object {
 	}
 	r := Eval(block.Literal.Body, s)
 	for i := start; i < len(a.Members); i++ {
-		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, a.Members[i])
-		s.Set(block.Literal.Parameters[1].(*ast.Identifier).Value, r)
+		s.Set(block.Literal.Parameters[0].(*ast.Identifier).Value, r)
+		s.Set(block.Literal.Parameters[1].(*ast.Identifier).Value, a.Members[i])
 		r = Eval(block.Literal.Body, s)
 		if obj, ok := r.(*ReturnValue); ok {
 			r = obj.Value
