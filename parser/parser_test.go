@@ -503,6 +503,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"true == true", true, "==", true},
 		{"true != true", true, "!=", true},
 		{"false == false", false, "==", false},
+		{"true or true", true, "or", true},
+		{"true and false", true, "and", false},
 	}
 	for _, tt := range infixTests {
 		l := lexer.New(tt.input)
@@ -635,6 +637,38 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		{
 			"add(a + b + c * d / f + g)",
 			"add((((a + b) + ((c * d) / f)) + g))",
+		},
+		{
+			"add(a) or b",
+			"(add(a) or b)",
+		},
+		{
+			"x == y or x == z",
+			"((x == y) or (x == z))",
+		},
+		{
+			"x == y and x == z",
+			"((x == y) and (x == z))",
+		},
+		{
+			"x or y and (x and z)",
+			"((x or y) and (x and z))",
+		},
+		{
+			"(x or y) and (x or z)",
+			"((x or y) and (x or z))",
+		},
+		{
+			"(x and y) or (x and z)",
+			"((x and y) or (x and z))",
+		},
+		{
+			"(x or y) ==  (x and z)",
+			"((x or y) == (x and z))",
+		},
+		{
+			"a[0] and x",
+			"((a[0]) and x)",
 		},
 	}
 

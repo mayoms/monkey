@@ -10,6 +10,7 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	ANDOR
 	EQUALS
 	LESSGREATER
 	SLICE
@@ -22,6 +23,8 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
+	token.AND:      ANDOR,
+	token.OR:       ANDOR,
 	token.EQ:       EQUALS,
 	token.NEQ:      EQUALS,
 	token.LT:       LESSGREATER,
@@ -92,6 +95,8 @@ func New(l *lexer.Lexer, wd string) *Parser {
 	p.registerInfix(token.NEQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.AND, p.parseInfixExpression)
+	p.registerInfix(token.OR, p.parseInfixExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 	p.registerInfix(token.DOT, p.parseMethodCallExpression)
