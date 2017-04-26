@@ -41,6 +41,8 @@ const (
 	RETURN   = "RETURN"
 	INCLUDE  = "INCLUDE"
 	STRING   = "STRING"
+	AND      = "AND"
+	OR       = "OR"
 )
 
 var keywords = map[string]TokenType{
@@ -52,6 +54,8 @@ var keywords = map[string]TokenType{
 	"else":    ELSE,
 	"return":  RETURN,
 	"include": INCLUDE,
+	"and":     AND,
+	"or":      OR,
 }
 
 type TokenType string

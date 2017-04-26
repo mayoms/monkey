@@ -33,6 +33,8 @@ function.call
 [1:3]
 5 % 4
 include tests
+x and y
+x or y
 `
 
 	tests := []struct {
@@ -135,9 +137,15 @@ include tests
 		{token.INT, "5"},
 		{token.MOD, "%"},
 		{token.INT, "4"},
-		{token.EOF, ""},
 		{token.INCLUDE, "include"},
 		{token.IDENT, "tests"},
+		{token.IDENT, "x"},
+		{token.AND, "and"},
+		{token.IDENT, "y"},
+		{token.IDENT, "x"},
+		{token.OR, "or"},
+		{token.IDENT, "y"},
+		{token.EOF, ""},
 	}
 
 	l := New(input)
