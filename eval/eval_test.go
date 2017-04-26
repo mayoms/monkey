@@ -1,22 +1,43 @@
 package eval
 
 import (
+	"fmt"
 	"monkey/lexer"
 	"monkey/parser"
+	"os"
 	"testing"
 )
 
 func TestIncludeObjects(t *testing.T) {
-	input := "include strings"
-	evaluated := testEval(input)
-	results, ok := evaluated.(*IncludedObject)
-	if !ok {
-		t.Fatalf("object is not includedObject. got=%T", evaluated)
-	}
-	if results.Name != "strings" {
-		t.Fatalf("included name not 'strings' got=%s", results.Name)
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"include test_files;eval.a;", 5},
+		{"include test_files;eval.b;", 10},
+		{"include test_files;eval.c(5);", 10},
+		{"include test_files;eval.d(4,4);", 8},
+		{"include test_files;test.d;", 25},
+		{"include test_files;pkg.testfn(10,25);", 35},
 	}
 
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		path, _ := os.Getwd()
+		path = path + "/../parser"
+		p := parser.New(l, path)
+		s := NewScope(nil)
+		program := p.ParseProgram()
+		if len(program.Includes) == 0 {
+			t.Errorf("Parsed program has no statements or included objects.\n")
+			os.Exit(1)
+		}
+		results := Eval(program, s)
+		if len(includeScope.store) != 3 {
+			t.Fatalf("program doesn't inlcude 3 modules. got=%d", len(includeScope.store))
+		}
+		testIntegerObject(t, results, tt.expected)
+	}
 }
 
 func TestStringMethods(t *testing.T) {
@@ -732,10 +753,17 @@ func TestEvalIntegerExpression(t *testing.T) {
 
 func testEval(input string) Object {
 	l := lexer.New(input)
-	p := parser.New(l)
+	path, _ := os.Getwd()
+	fmt.Println(path)
+	p := parser.New(l, path)
 	s := NewScope(nil)
 	program := p.ParseProgram()
-
+	if len(program.Statements) == 0 {
+		if len(program.Includes) == 0 {
+			fmt.Printf("Parsed program has no statements or included objects.\n")
+			os.Exit(1)
+		}
+	}
 	return Eval(program, s)
 }
 

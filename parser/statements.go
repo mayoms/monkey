@@ -71,7 +71,7 @@ func (p *Parser) getIncludedStatements(importpath string) (*ast.Program, bool, e
 	l := lexer.New(string(f))
 	ps := New(l, path)
 	parsed := ps.ParseProgram()
-	if len(ps.Errors()) != 0 {
+	if len(ps.errors) != 0 {
 		p.errors = append(p.errors, ps.errors...)
 	}
 	return parsed, module, nil
