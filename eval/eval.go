@@ -400,7 +400,8 @@ func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Obje
 				return i
 			}
 		case *ast.CallExpression:
-			return obj.CallMethod(o.Function.String())
+			args := evalArgs(o.Arguments, scope)
+			return obj.CallMethod(o.Function.String(), args...)
 		}
 	default:
 		if method, ok := call.Call.(*ast.CallExpression); ok {

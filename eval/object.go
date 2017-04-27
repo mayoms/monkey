@@ -51,7 +51,20 @@ func (s *Struct) Inspect() string {
 
 func (s *Struct) Type() ObjectType { return STRUCT_OBJ }
 func (s *Struct) CallMethod(method string, args ...Object) Object {
-	return newError(NOMETHODERROR, method, s.Type())
+	fn, ok := s.methods[method]
+	if !ok {
+		return newError(NOMETHODERROR, method, s.Type())
+	}
+	fn.Scope = NewScope(s.Scope)
+	// TODO: If not enough of arguments are passed a panic occur, if too few, no warning or error
+	for i, v := range fn.Literal.Parameters {
+		fn.Scope.Set(v.String(), args[i])
+	}
+	r := Eval(fn.Literal.Body, fn.Scope)
+	if obj, ok := r.(*ReturnValue); ok {
+		return obj.Value
+	}
+	return r
 }
 
 func (b *Builtin) Inspect() string  { return "builtin function" }
