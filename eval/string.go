@@ -8,7 +8,7 @@ type String struct{ Value string }
 
 func (s *String) Inspect() string  { return `"` + s.Value + `"` }
 func (s *String) Type() ObjectType { return STRING_OBJ }
-func (s *String) CallMethod(method string, args []Object) Object {
+func (s *String) CallMethod(method string, args ...Object) Object {
 
 	switch method {
 	case "find":

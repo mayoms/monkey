@@ -42,6 +42,6 @@ type Error struct{ Message string }
 
 func (e *Error) Inspect() string  { return "Err: " + e.Message }
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
-func (e *Error) CallMethod(method string, args []Object) Object {
+func (e *Error) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, e.Type())
 }

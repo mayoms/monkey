@@ -27,7 +27,7 @@ const (
 type Object interface {
 	Type() ObjectType
 	Inspect() string
-	CallMethod(method string, args []Object) Object
+	CallMethod(method string, args ...Object) Object
 }
 
 type Struct struct {
@@ -50,13 +50,13 @@ func (s *Struct) Inspect() string {
 }
 
 func (s *Struct) Type() ObjectType { return STRUCT_OBJ }
-func (s *Struct) CallMethod(method string, args []Object) Object {
+func (s *Struct) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, s.Type())
 }
 
 func (b *Builtin) Inspect() string  { return "builtin function" }
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
-func (b *Builtin) CallMethod(method string, args []Object) Object {
+func (b *Builtin) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, b.Type())
 }
 
@@ -67,7 +67,7 @@ type IncludedObject struct {
 
 func (io *IncludedObject) Inspect() string  { return fmt.Sprintf("included object: %s", io.Name) }
 func (io *IncludedObject) Type() ObjectType { return INCLUDED_OBJ }
-func (io *IncludedObject) CallMethod(method string, args []Object) Object {
+func (io *IncludedObject) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, io.Type())
 }
 
@@ -78,7 +78,7 @@ type Function struct {
 
 func (f *Function) Inspect() string  { return f.Literal.String() }
 func (r *Function) Type() ObjectType { return FUNCTION_OBJ }
-func (f *Function) CallMethod(method string, args []Object) Object {
+func (f *Function) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, f.Type())
 }
 
@@ -86,7 +86,7 @@ type ReturnValue struct{ Value Object }
 
 func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
 func (rv *ReturnValue) Type() ObjectType { return RETURN_VALUE_OBJ }
-func (rv *ReturnValue) CallMethod(method string, args []Object) Object {
+func (rv *ReturnValue) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, rv.Type())
 }
 
@@ -94,7 +94,7 @@ type Integer struct{ Value int64 }
 
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
-func (i *Integer) CallMethod(method string, args []Object) Object {
+func (i *Integer) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, i.Type())
 }
 
@@ -102,7 +102,7 @@ type Boolean struct{ Value bool }
 
 func (b *Boolean) Inspect() string  { return fmt.Sprintf("%v", b.Value) }
 func (b *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
-func (b *Boolean) CallMethod(method string, args []Object) Object {
+func (b *Boolean) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, b.Type())
 }
 
@@ -110,6 +110,6 @@ type Null struct{}
 
 func (n *Null) Inspect() string  { return "null" }
 func (n *Null) Type() ObjectType { return NULL_OBJ }
-func (n *Null) CallMethod(method string, args []Object) Object {
+func (n *Null) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, n.Type())
 }

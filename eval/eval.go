@@ -389,7 +389,7 @@ func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Obje
 			}
 		case *ast.CallExpression:
 			if o.Function.String() == "Scope" {
-				return obj.CallMethod("Scope", []Object{})
+				return obj.CallMethod("Scope")
 			}
 			return evalFunctionCall(o, m.Scope)
 		}
@@ -400,12 +400,12 @@ func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Obje
 				return i
 			}
 		case *ast.CallExpression:
-			return obj.CallMethod(o.Function.String(), []Object{})
+			return obj.CallMethod(o.Function.String())
 		}
 	default:
 		if method, ok := call.Call.(*ast.CallExpression); ok {
 			args := evalArgs(method.Arguments, scope)
-			return obj.CallMethod(method.Function.String(), args)
+			return obj.CallMethod(method.Function.String(), args...)
 		}
 	}
 	return newError(NOMETHODERROR, call.String(), obj.Type())

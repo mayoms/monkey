@@ -40,7 +40,7 @@ func (h *Hash) Inspect() string {
 	return out.String()
 }
 
-func (h *Hash) CallMethod(method string, args []Object) Object {
+func (h *Hash) CallMethod(method string, args ...Object) Object {
 	switch method {
 	case "filter":
 		return h.Filter(args...)
