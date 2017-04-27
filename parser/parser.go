@@ -10,21 +10,21 @@ import (
 const (
 	_ int = iota
 	LOWEST
-	ANDOR
+	OR
+	AND
 	EQUALS
 	LESSGREATER
 	SLICE
 	SUM
 	PRODUCT
 	PREFIX
-	METHOD
 	CALL
 	INDEX
 )
 
 var precedences = map[token.TokenType]int{
-	token.AND:      ANDOR,
-	token.OR:       ANDOR,
+	token.OR:       OR,
+	token.AND:      AND,
 	token.EQ:       EQUALS,
 	token.NEQ:      EQUALS,
 	token.LT:       LESSGREATER,
@@ -35,8 +35,7 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK: PRODUCT,
 	token.SLASH:    PRODUCT,
 	token.LPAREN:   CALL,
-	token.LBRACKET: INDEX,
-	token.DOT:      METHOD,
+	token.DOT:      CALL,
 	token.COLON:    SLICE,
 }
 

@@ -214,6 +214,10 @@ func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 	}
 
 	switch {
+	case i.Operator == "and":
+		return nativeBoolToBooleanObject(objectToNativeBoolean(left) && objectToNativeBoolean(right))
+	case i.Operator == "or":
+		return nativeBoolToBooleanObject(objectToNativeBoolean(left) || objectToNativeBoolean(right))
 	case left.Type() == INTEGER_OBJ && right.Type() == INTEGER_OBJ:
 		return evalIntInfixExpression(i.Operator, left, right)
 	case left.Type() == STRING_OBJ && right.Type() == STRING_OBJ:
@@ -224,6 +228,20 @@ func evalInfixExpression(i *ast.InfixExpression, s *Scope) Object {
 		return nativeBoolToBooleanObject(left != right)
 	}
 	return newError(INFIXOP, i.Operator, left.Type(), right.Type())
+}
+
+func objectToNativeBoolean(o Object) bool {
+	if r, ok := o.(*ReturnValue); ok {
+		o = r.Value
+	}
+	switch obj := o.(type) {
+	case *Boolean:
+		return obj.Value
+	case *Null:
+		return false
+	default:
+		return true
+	}
 }
 
 // Helpers for infix evaluation below

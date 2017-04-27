@@ -652,7 +652,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"x or y and (x and z)",
-			"((x or y) and (x and z))",
+			"(x or (y and (x and z)))",
 		},
 		{
 			"(x or y) and (x or z)",
@@ -670,6 +670,10 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"a[0] and x",
 			"((a[0]) and x)",
 		},
+		{
+			`str(x) or i.find("abc")`,
+			"(str(x) or i.find(abc))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -679,7 +683,6 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		checkParserErrors(t, p)
 
 		actual := program.String()
-		t.Logf("input=%s, expected=%q, got=%q", tt.input, tt.expected, actual)
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}

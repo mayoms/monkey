@@ -698,6 +698,18 @@ func TestEvalBooleanExpressions(t *testing.T) {
 		{`"abc" != "bc"`, true},
 		{`let x = "abc"; x == "abc"`, true},
 		{`let x = fn(){ "abc" }; x() == "abc"`, true},
+		{"true and true", true},
+		{"true and false", false},
+		{"true or true", true},
+		{"true or false", true},
+		{`"string" and false`, false},
+		{`[] or false`, true},
+		{`len([1,2,3]) > 2 and false`, false},
+		{`type([]) == "ARRAY" and len([1234]) == 4`, false},
+		{`type([]) == "ARRAY" and len("1234") == 4`, true},
+		{"(true and true) or (true or false)", true},
+		{"(true and true) and (true and false)", false},
+		{`!!"abc".find("d")`, false},
 	}
 
 	for _, tt := range tests {
@@ -757,7 +769,6 @@ func TestEvalIntegerExpression(t *testing.T) {
 func testEval(input string) Object {
 	l := lexer.New(input)
 	path, _ := os.Getwd()
-	fmt.Println(path)
 	p := parser.New(l, path)
 	s := NewScope(nil)
 	program := p.ParseProgram()
