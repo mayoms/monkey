@@ -35,6 +35,7 @@ function.call
 include tests
 x and y
 x or y
+struct
 `
 
 	tests := []struct {
@@ -145,6 +146,7 @@ x or y
 		{token.IDENT, "x"},
 		{token.OR, "or"},
 		{token.IDENT, "y"},
+		{token.STRUCT, "struct"},
 		{token.EOF, ""},
 	}
 

@@ -37,6 +37,8 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalArrayLiteral(node, scope)
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, scope)
+	case *ast.StructLiteral:
+		return evalStructLiteral(node, scope)
 	case *ast.FunctionLiteral:
 		return evalFunctionLiteral(node, scope)
 	case *ast.PrefixExpression:
@@ -165,6 +167,18 @@ func evalHashLiteral(hl *ast.HashLiteral, scope *Scope) Object {
 		}
 	}
 	return &Hash{Pairs: hashMap}
+}
+
+func evalStructLiteral(s *ast.StructLiteral, scope *Scope) Object {
+	structScope := NewScope(nil)
+	for key, value := range s.Pairs {
+		if ident, ok := key.(*ast.Identifier); ok {
+			structScope.Set(ident.String(), Eval(value, scope))
+		} else {
+			return newError(KEYERROR, "IDENT")
+		}
+	}
+	return &Struct{Scope: structScope, methods: make(map[string]*Function)}
 }
 
 func evalFunctionLiteral(fl *ast.FunctionLiteral, scope *Scope) Object {
@@ -370,14 +384,23 @@ func evalMethodCallExpression(call *ast.MethodCallExpression, scope *Scope) Obje
 	case *IncludedObject:
 		switch o := call.Call.(type) {
 		case *ast.Identifier:
-			if o, ok := m.Scope.Get(call.Call.String()); ok {
-				return o
+			if i, ok := m.Scope.Get(call.Call.String()); ok {
+				return i
 			}
 		case *ast.CallExpression:
 			if o.Function.String() == "Scope" {
 				return obj.CallMethod("Scope", []Object{})
 			}
 			return evalFunctionCall(o, m.Scope)
+		}
+	case *Struct:
+		switch o := call.Call.(type) {
+		case *ast.Identifier:
+			if i, ok := m.Scope.Get(call.Call.String()); ok {
+				return i
+			}
+		case *ast.CallExpression:
+			return obj.CallMethod(o.Function.String(), []Object{})
 		}
 	default:
 		if method, ok := call.Call.(*ast.CallExpression); ok {

@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"fmt"
 	"monkey/ast"
 )
@@ -20,12 +21,37 @@ const (
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
 	INCLUDED_OBJ     = "INCLUDE"
+	STRUCT_OBJ       = "STRUCT"
 )
 
 type Object interface {
 	Type() ObjectType
 	Inspect() string
 	CallMethod(method string, args []Object) Object
+}
+
+type Struct struct {
+	Scope   *Scope
+	methods map[string]*Function
+}
+
+func (s *Struct) Inspect() string {
+	var out bytes.Buffer
+	out.WriteString("( ")
+	for k, v := range s.Scope.store {
+		out.WriteString(k)
+		out.WriteString("->")
+		out.WriteString(v.Inspect())
+		out.WriteString(" ")
+	}
+	out.WriteString(" )")
+
+	return out.String()
+}
+
+func (s *Struct) Type() ObjectType { return STRUCT_OBJ }
+func (s *Struct) CallMethod(method string, args []Object) Object {
+	return newError(NOMETHODERROR, method, s.Type())
 }
 
 func (b *Builtin) Inspect() string  { return "builtin function" }
