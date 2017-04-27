@@ -37,6 +37,7 @@ var precedences = map[token.TokenType]int{
 	token.LPAREN:   CALL,
 	token.DOT:      CALL,
 	token.COLON:    SLICE,
+	token.LBRACKET: INDEX,
 }
 
 type Parser struct {
