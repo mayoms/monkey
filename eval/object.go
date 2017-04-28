@@ -55,8 +55,8 @@ func (s *Struct) CallMethod(method string, args ...Object) Object {
 	if !ok {
 		return newError(NOMETHODERROR, method, s.Type())
 	}
-	fn.Scope = NewScope(s.Scope)
-	// TODO: If not enough of arguments are passed a panic occur, if too few, no warning or error
+	fn.Scope = NewScope(nil)
+	fn.Scope.Set("self", s)
 	for i, v := range fn.Literal.Parameters {
 		fn.Scope.Set(v.String(), args[i])
 	}
