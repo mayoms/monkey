@@ -86,6 +86,27 @@ func init() {
 				return NULL
 			},
 		},
+		"addm": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 3 {
+					return newError(ARGUMENTERROR, "2", len(args))
+				}
+				st, ok := args[0].(*Struct)
+				if !ok {
+					return newError(CONSTRUCTERR, "first", st.Type(), args[0].Type())
+				}
+				name, ok := args[1].(*String)
+				if !ok {
+					return newError(CONSTRUCTERR, "second", name.Type(), args[1].Type())
+				}
+				fn, ok := args[2].(*Function)
+				if !ok {
+					return newError(CONSTRUCTERR, "second", name.Type(), args[1].Type())
+				}
+				st.methods[name.Value] = fn
+				return NULL
+			},
+		},
 		"type": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 1 {

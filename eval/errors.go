@@ -16,6 +16,7 @@ const (
 	ARGUMENTERROR
 	INPUTERROR
 	RTERROR
+	CONSTRUCTERR
 )
 
 var errorType = map[int]string{
@@ -30,6 +31,7 @@ var errorType = map[int]string{
 	ARGUMENTERROR: "wrong number of arguments. expected=%s, got=%d",
 	INPUTERROR:    "unsupported input type '%s' for function or method: %s",
 	RTERROR:       "return type should be %s",
+	CONSTRUCTERR:  "%s argument for addm should be type %s. got=%s",
 }
 
 func newError(t int, args ...interface{}) Object {
@@ -40,6 +42,6 @@ type Error struct{ Message string }
 
 func (e *Error) Inspect() string  { return "Err: " + e.Message }
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
-func (e *Error) CallMethod(method string, args []Object) Object {
+func (e *Error) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, e.Type())
 }

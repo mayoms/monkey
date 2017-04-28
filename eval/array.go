@@ -24,7 +24,7 @@ func (a *Array) Inspect() string {
 }
 func (a *Array) Type() ObjectType { return ARRAY_OBJ }
 
-func (a *Array) CallMethod(method string, args []Object) Object {
+func (a *Array) CallMethod(method string, args ...Object) Object {
 	switch method {
 	case "count":
 		return a.Count(args...)

@@ -43,6 +43,7 @@ const (
 	STRING   = "STRING"
 	AND      = "AND"
 	OR       = "OR"
+	STRUCT   = "STRUCT"
 )
 
 var keywords = map[string]TokenType{
@@ -56,6 +57,7 @@ var keywords = map[string]TokenType{
 	"include": INCLUDE,
 	"and":     AND,
 	"or":      OR,
+	"struct":  STRUCT,
 }
 
 type TokenType string

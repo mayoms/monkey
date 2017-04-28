@@ -55,6 +55,27 @@ func (p *Parser) parseHashExpression() ast.Expression {
 	return hash
 }
 
+func (p *Parser) parseStructExpression() ast.Expression {
+	s := &ast.StructLiteral{Token: p.curToken}
+	s.Pairs = make(map[ast.Expression]ast.Expression)
+	p.expectPeek(token.LPAREN)
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return s
+	}
+	for !p.curTokenIs(token.RPAREN) {
+		p.nextToken()
+		key := p.parseExpression(LOWEST)
+		if !p.expectPeek(token.ARROW) {
+			return nil
+		}
+		p.nextToken()
+		s.Pairs[key] = p.parseExpression(LOWEST)
+		p.nextToken()
+	}
+	return s
+}
+
 func (p *Parser) parseArrayExpression() ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken}
 	array.Members = p.parseExpressionArray(array.Members, token.RBRACKET)
