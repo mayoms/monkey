@@ -45,12 +45,22 @@ func (p *Parser) parseMethodCallExpression(obj ast.Expression) ast.Expression {
 	methodCall := &ast.MethodCallExpression{Token: p.curToken, Object: obj}
 	p.nextToken()
 	m := p.parseExpression(LOWEST)
-	if c, ok := m.(*ast.MethodCallExpression); ok {
-		methodCall.Call = c.Object
-		c.Object = methodCall
-		return c
+	switch call := m.(type) {
+	case *ast.MethodCallExpression:
+		switch obj.(type) {
+		case *ast.CallExpression:
+			objectCall := &ast.MethodCallExpression{Token: p.curToken, Object: obj, Call: call.Object}
+			methodCall.Object = objectCall
+			methodCall.Call = call.Call
+			return methodCall
+		default:
+			methodCall.Object = &ast.MethodCallExpression{Token: methodCall.Token, Object: obj, Call: call.Object.(*ast.MethodCallExpression).Object}
+			methodCall.Call = call.Object.(*ast.MethodCallExpression).Call
+			call.Object = methodCall
+			return call
+		}
+	case *ast.CallExpression:
+		methodCall.Call = m
 	}
-	methodCall.Call = m
-
 	return methodCall
 }
