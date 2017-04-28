@@ -8,6 +8,30 @@ import (
 	"testing"
 )
 
+func TestStructObjects(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`struct (a->15).a`, 15},
+		{`let st = struct (a->15); type(addm(st, "get", fn() { self.a })) == "NULL"`, true},
+		{`let st = struct (a->15); addm(st, "get", fn() { self.a }); st.get()`, 15},
+		{`let st = struct (a->15); addm(st, "get", fn() { a }); type(st.get()) == "ERROR"`, true},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case bool:
+			testBooleanObject(t, evaluated, expected)
+		default:
+			t.Errorf("evaluted not %T. got=%T", evaluated, expected)
+		}
+	}
+}
+
 func TestIncludeObjects(t *testing.T) {
 	tests := []struct {
 		input    string
