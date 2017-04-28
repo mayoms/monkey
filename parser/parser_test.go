@@ -674,6 +674,10 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			`str(x) or i.find("abc")`,
 			"(str(x) or i.find(abc))",
 		},
+		{
+			`[1,2,3].map(fn(x) { x + 1 }).filter(fn(y) { y == 2 })`,
+			"",
+		},
 	}
 
 	for _, tt := range tests {
