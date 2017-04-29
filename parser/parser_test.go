@@ -216,6 +216,25 @@ func TestStringLiteralExpression(t *testing.T) {
 
 }
 
+func TestInterpolatedString(t *testing.T) {
+	input := `'{hello}, {world}'`
+
+	l := lexer.New(input)
+	p := New(l, path)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	literal, ok := stmt.Expression.(*ast.InterpolatedString)
+	if !ok {
+		t.Fatalf("exp not *ast.InterpolatedString. got=%T", stmt.Expression)
+	}
+	if literal.Value != "{hello}, {world}" {
+		t.Fatalf("literal.Value not 'hello, world', got=%s", literal.Value)
+	}
+
+}
+
 func TestLetStatements(t *testing.T) {
 	tests := []struct {
 		input              string

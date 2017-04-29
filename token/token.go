@@ -41,6 +41,8 @@ const (
 	RETURN   = "RETURN"
 	INCLUDE  = "INCLUDE"
 	STRING   = "STRING"
+	ISTRING  = "ISTRING"
+	BYTES    = "BYTES"
 	AND      = "AND"
 	OR       = "OR"
 	STRUCT   = "STRUCT"

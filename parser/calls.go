@@ -45,7 +45,11 @@ func (p *Parser) parseMethodCallExpression(obj ast.Expression) ast.Expression {
 	methodCall := &ast.MethodCallExpression{Token: p.curToken, Object: obj}
 	p.nextToken()
 	name := p.parseIdentifier()
-	p.nextToken()
-	methodCall.Call = p.parseCallExpressions(name)
+	if !p.peekTokenIs(token.LPAREN) {
+		methodCall.Call = p.parseExpression(LOWEST)
+	} else {
+		p.nextToken()
+		methodCall.Call = p.parseCallExpressions(name)
+	}
 	return methodCall
 }

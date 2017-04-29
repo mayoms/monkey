@@ -6,16 +6,21 @@ import (
 )
 
 type Lexer struct {
-	input        string
-	position     int
-	readPosition int
-	ch           byte
+	input         string
+	position      int
+	readPosition  int
+	ch            byte
+	interpolation bool
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input}
+	l := &Lexer{input: input, interpolation: false}
 	l.readChar()
 	return l
+}
+
+func (l *Lexer) flipInterpolation() {
+	l.interpolation = !l.interpolation
 }
 
 func (l *Lexer) readChar() {
@@ -38,8 +43,19 @@ func (l *Lexer) peekChar() byte {
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
-	l.skipWhitespace()
+	if l.interpolation {
+		if isSingleQuote(l.ch) {
+			tok = newToken(token.ISTRING, l.ch)
+			l.flipInterpolation()
+			l.readChar()
+			return tok
+		}
+		tok = newToken(token.BYTES, l.ch)
+		l.readChar()
+		return tok
+	}
 
+	l.skipWhitespace()
 	switch l.ch {
 	case '=':
 		if l.peekChar() == '=' {
@@ -112,6 +128,11 @@ func (l *Lexer) NextToken() token.Token {
 				tok.Literal = s
 				return tok
 			}
+		} else if isSingleQuote(l.ch) {
+			tok = newToken(token.ISTRING, l.ch)
+			l.flipInterpolation()
+			l.readChar()
+			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
 	}
@@ -136,7 +157,6 @@ func (l *Lexer) readString() (string, error) {
 			return "", err
 		}
 	}
-
 	return l.input[start : l.position-1], nil
 }
 
@@ -166,6 +186,10 @@ func isDigit(ch byte) bool {
 
 func isQuote(ch byte) bool {
 	return ch == 34
+}
+
+func isSingleQuote(ch byte) bool {
+	return ch == 0x27
 }
 
 func (l *Lexer) skipWhitespace() {

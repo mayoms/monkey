@@ -8,6 +8,11 @@ import (
 	"testing"
 )
 
+func TestChainedCalled(t *testing.T) {
+	input := `[1,2,3].map(fn(x) { x + 1 }).map(fn(x) { x * 5 }).filter(fn(x) { x > 10 }).pop()`
+	testEval(input)
+}
+
 func TestStructObjects(t *testing.T) {
 	tests := []struct {
 		input    string
