@@ -44,6 +44,8 @@ func (p *Parser) parseExpressionArray(a []ast.Expression, closure token.TokenTyp
 func (p *Parser) parseMethodCallExpression(obj ast.Expression) ast.Expression {
 	methodCall := &ast.MethodCallExpression{Token: p.curToken, Object: obj}
 	p.nextToken()
-	methodCall.Call = p.parseExpression(LOWEST)
+	name := p.parseIdentifier()
+	p.nextToken()
+	methodCall.Call = p.parseCallExpressions(name)
 	return methodCall
 }
