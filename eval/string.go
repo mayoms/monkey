@@ -2,13 +2,7 @@ package eval
 
 import (
 	"bytes"
-	"fmt"
 	"monkey/ast"
-)
-
-const (
-	LBRACE = 0x7b
-	RBRACE = 0x7d
 )
 
 type InterpolatedString struct {
@@ -21,39 +15,20 @@ type Interpolable interface {
 	Interpolate(scope *Scope)
 }
 
-func (is *InterpolatedString) Inspect() string  { return `"` + is.Value.Value + `"` }
+func (is *InterpolatedString) Inspect() string  { return is.Value.Value }
 func (is *InterpolatedString) Type() ObjectType { return STRING_OBJ }
 func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
 	return is.Value.CallMethod(method, args...)
 }
 
 func (is *InterpolatedString) Interpolate(scope *Scope) {
-	interpolatedObjects := []Object{}
-	for _, v := range is.Expressions {
-		fmt.Printf("%#v\n", v.String())
-		if i, ok := v.(*ast.Identifier); ok {
-			if sv, ok := scope.Get(i.Value); ok {
-				if iss, ok := sv.(*InterpolatedString); ok {
-					if iss.RawValue == is.RawValue {
-						interpolatedObjects = append(interpolatedObjects, &String{Value: v.String()})
-						continue
-					}
-				}
-			}
-		}
-		evaluated := Eval(v, scope)
-		if evaluated.Type() == ERROR_OBJ {
-			evaluated = &String{Value: v.String()}
-		}
-		interpolatedObjects = append(interpolatedObjects, evaluated)
-	}
 	var out bytes.Buffer
 
 	objIndex := 0
 	mStr := "{" + is.Expressions[objIndex].String() + "}"
 	sl := len(is.RawValue)
 	ml := len(mStr)
-	ol := len(interpolatedObjects)
+	ol := len(is.Expressions)
 
 	for i := 0; i < sl; i++ {
 		if i+ml > sl {
@@ -61,7 +36,8 @@ func (is *InterpolatedString) Interpolate(scope *Scope) {
 			break
 		}
 		if is.RawValue[i:i+ml] == mStr {
-			out.WriteString(interpolatedObjects[objIndex].Inspect())
+			v := is.evalInterpExpression(is.Expressions[objIndex], scope)
+			out.WriteString(v.Inspect())
 			i += ml
 			objIndex++
 			if objIndex+1 > ol {
@@ -75,6 +51,26 @@ func (is *InterpolatedString) Interpolate(scope *Scope) {
 		}
 	}
 	is.Value.Value = out.String()
+}
+
+func (is *InterpolatedString) evalInterpExpression(exp ast.Expression, s *Scope) Object {
+	_, ok := exp.(*ast.Identifier)
+	if ok {
+		sv, ok := s.Get(exp.String())
+		if ok {
+			iss, ok := sv.(*InterpolatedString)
+			if ok {
+				if iss.RawValue == is.RawValue {
+					return &String{Value: exp.String()}
+				}
+			}
+		}
+	}
+	evaluated := Eval(exp, s)
+	if evaluated.Type() == ERROR_OBJ {
+		evaluated = &String{Value: exp.String()}
+	}
+	return evaluated
 }
 
 type String struct{ Value string }

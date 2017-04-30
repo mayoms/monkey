@@ -841,14 +841,19 @@ func TestInterpolation(t *testing.T) {
 		input    string
 		expected string
 	}{
-		// {`let x = 5; 'abc{x}'`, "abc5"},
-		// {`'abc{x}'`, "abcx"},
+		{`let x = 5; 'abc{x}'`, "abc5"},
+		{`'abc{x}'`, "abcx"},
 		{`'abc{5 + 5}abc'`, "abc10abc"},
+		{`let x = fn(x) { x * 5 };'{x(1)}{x(5)}{x(10)}'`, "52550"},
+		{`let x = fn(x) { x * 5 };'abcdef{x(10)}'`, "abcdef50"},
+		{`'abcdef{(10 * 5)}'`, "abcdef50"},
+		{`'{10 + 10}abcdef{(10 * 5)}'`, "20abcdef50"},
+		{`let x = 5; let y = '{x}';'{y}abcdef{(10 * x)}'`, "5abcdef50"},
 	}
 
 	for _, tt := range input {
 		evaluated := testEval(tt.input)
-		testInterpolatedStringObject(t, evaluated, tt.input)
+		testInterpolatedStringObject(t, evaluated, tt.expected)
 	}
 }
 
