@@ -30,6 +30,7 @@ func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
 func (is *InterpolatedString) Interpolate(scope *Scope) {
 	interpolatedObjects := []Object{}
 	for _, v := range is.Expressions {
+		fmt.Printf("%#v\n", v.String())
 		if i, ok := v.(*ast.Identifier); ok {
 			if sv, ok := scope.Get(i.Value); ok {
 				if iss, ok := sv.(*InterpolatedString); ok {
@@ -47,27 +48,32 @@ func (is *InterpolatedString) Interpolate(scope *Scope) {
 		interpolatedObjects = append(interpolatedObjects, evaluated)
 	}
 	var out bytes.Buffer
-	objIndex := 0
-	for i := 0; i < len(is.RawValue); i++ {
-		if is.RawValue[i] == LBRACE {
-			i++
-			if is.RawValue[i] == RBRACE {
-				out.WriteString("{}")
-				i++
-				continue
-			}
-			obj := interpolatedObjects[objIndex]
-			out.WriteString(obj.Inspect())
-			objIndex++
-			for is.RawValue[i-1] != RBRACE {
-				i++
-				continue
-			}
-		}
-		fmt.Println(i, len(is.RawValue))
-		out.WriteByte(is.RawValue[i])
-	}
 
+	objIndex := 0
+	mStr := "{" + is.Expressions[objIndex].String() + "}"
+	sl := len(is.RawValue)
+	ml := len(mStr)
+	ol := len(interpolatedObjects)
+
+	for i := 0; i < sl; i++ {
+		if i+ml > sl {
+			out.WriteString(is.RawValue[i:])
+			break
+		}
+		if is.RawValue[i:i+ml] == mStr {
+			out.WriteString(interpolatedObjects[objIndex].Inspect())
+			i += ml
+			objIndex++
+			if objIndex+1 > ol {
+				out.WriteString(is.RawValue[i:])
+				break
+			}
+			mStr = "{" + is.Expressions[objIndex].String() + "}"
+			ml = len(mStr)
+		} else {
+			out.WriteByte(is.RawValue[i])
+		}
+	}
 	is.Value.Value = out.String()
 }
 
