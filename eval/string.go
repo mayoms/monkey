@@ -4,6 +4,37 @@ import (
 	"bytes"
 )
 
+type InterpolatedString struct {
+	Value       *String
+	RawValue    string
+	Expressions []Object
+}
+
+func (is *InterpolatedString) Inspect() string  { return `"` + is.Value.Value + `"` }
+func (is *InterpolatedString) Type() ObjectType { return STRING_OBJ }
+func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
+	return is.Value.CallMethod(method, args...)
+}
+
+func (is *InterpolatedString) Interpolate() {
+	var out bytes.Buffer
+	objIndex := 0
+	for i := 0; i < len(is.RawValue); i++ {
+		if is.RawValue[i] == 0x7b && is.RawValue[i+1] != 0x7d {
+			for p := 1; p < len(is.RawValue); p++ {
+				i++
+				if is.RawValue[p] == 0x7d {
+					out.WriteString(is.Expressions[0].Inspect())
+					objIndex++
+					break
+				}
+			}
+		}
+		out.WriteByte(is.RawValue[i])
+	}
+	is.Value.Value = out.String()
+}
+
 type String struct{ Value string }
 
 func (s *String) Inspect() string  { return `"` + s.Value + `"` }

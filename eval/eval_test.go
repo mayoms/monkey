@@ -835,3 +835,16 @@ func testStringObject(t *testing.T, obj Object, expected string) bool {
 	}
 	return true
 }
+
+func testInterpolatedStringObject(t *testing.T, obj Object, expected string) bool {
+	result, ok := obj.(*String)
+	if !ok {
+		t.Errorf("object is not String. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got='%s', want='%s'", result.Value, expected)
+		return false
+	}
+	return true
+}

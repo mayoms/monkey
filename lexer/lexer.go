@@ -7,20 +7,31 @@ import (
 
 type Lexer struct {
 	input         string
+	ch            byte
 	position      int
 	readPosition  int
-	ch            byte
 	interpolation bool
+	paused        bool
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input, interpolation: false}
+	l := &Lexer{input: input, interpolation: false, paused: false}
 	l.readChar()
 	return l
 }
 
 func (l *Lexer) flipInterpolation() {
 	l.interpolation = !l.interpolation
+}
+
+func (l *Lexer) pause() {
+	l.interpolation = false
+	l.paused = true
+}
+
+func (l *Lexer) unPause() {
+	l.interpolation = true
+	l.paused = true
 }
 
 func (l *Lexer) readChar() {
@@ -42,13 +53,26 @@ func (l *Lexer) peekChar() byte {
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
-
+	if l.paused && l.ch == '}' {
+		tok = newToken(token.RBRACE, l.ch)
+		if !isQuote(l.peekChar()) {
+			l.unPause()
+			l.readChar()
+		}
+		return tok
+	}
 	if l.interpolation {
 		if isSingleQuote(l.ch) {
 			tok = newToken(token.ISTRING, l.ch)
 			l.flipInterpolation()
 			l.readChar()
 			return tok
+		}
+		if l.ch == '{' && l.peekChar() != '}' {
+			l.pause()
+			l.readChar()
+			exp := l.NextToken()
+			return exp
 		}
 		tok = newToken(token.BYTES, l.ch)
 		l.readChar()

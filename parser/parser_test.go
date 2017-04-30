@@ -225,14 +225,23 @@ func TestInterpolatedString(t *testing.T) {
 	checkParserErrors(t, p)
 
 	stmt := program.Statements[0].(*ast.ExpressionStatement)
-	literal, ok := stmt.Expression.(*ast.InterpolatedString)
+	is, ok := stmt.Expression.(*ast.InterpolatedString)
 	if !ok {
 		t.Fatalf("exp not *ast.InterpolatedString. got=%T", stmt.Expression)
 	}
-	if literal.Value != "{hello}, {world}" {
-		t.Fatalf("literal.Value not 'hello, world', got=%s", literal.Value)
+	if is.Value != "{hello}, {world}" {
+		t.Fatalf("is.Value not 'hello, world', got=%s", is.Value)
 	}
-
+	if len(is.ExprList) != 2 {
+		t.Fatalf("is.ExprList has wrong number of expressions. expected=2, got=%d", len(is.ExprList))
+	}
+	for _, v := range is.ExprList {
+		if _, ok := v.(*ast.Identifier); !ok {
+			t.Fatalf("expression not *ast.Identifier. got=%T", v)
+		}
+	}
+	testIdentifier(t, is.ExprList[0], "hello")
+	testIdentifier(t, is.ExprList[1], "world")
 }
 
 func TestLetStatements(t *testing.T) {
