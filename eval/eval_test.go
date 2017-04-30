@@ -836,14 +836,30 @@ func testStringObject(t *testing.T, obj Object, expected string) bool {
 	return true
 }
 
+func TestInterpolation(t *testing.T) {
+	input := []struct {
+		input    string
+		expected string
+	}{
+		// {`let x = 5; 'abc{x}'`, "abc5"},
+		// {`'abc{x}'`, "abcx"},
+		{`'abc{5 + 5}abc'`, "abc10abc"},
+	}
+
+	for _, tt := range input {
+		evaluated := testEval(tt.input)
+		testInterpolatedStringObject(t, evaluated, tt.input)
+	}
+}
+
 func testInterpolatedStringObject(t *testing.T, obj Object, expected string) bool {
-	result, ok := obj.(*String)
+	result, ok := obj.(*InterpolatedString)
 	if !ok {
 		t.Errorf("object is not String. got=%T (%+v)", obj, obj)
 		return false
 	}
-	if result.Value != expected {
-		t.Errorf("object has wrong value. got='%s', want='%s'", result.Value, expected)
+	if result.Inspect() != expected {
+		t.Errorf("object has wrong value. got='%s', want='%s'", result.Inspect(), expected)
 		return false
 	}
 	return true

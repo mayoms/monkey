@@ -2,7 +2,13 @@ package eval
 
 import (
 	"bytes"
+	"fmt"
 	"monkey/ast"
+)
+
+const (
+	LBRACE = 0x7b
+	RBRACE = 0x7d
 )
 
 type InterpolatedString struct {
@@ -24,21 +30,41 @@ func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
 func (is *InterpolatedString) Interpolate(scope *Scope) {
 	interpolatedObjects := []Object{}
 	for _, v := range is.Expressions {
-		interpolatedObjects = append(interpolatedObjects, Eval(v, scope))
+		if i, ok := v.(*ast.Identifier); ok {
+			if sv, ok := scope.Get(i.Value); ok {
+				if iss, ok := sv.(*InterpolatedString); ok {
+					if iss.RawValue == is.RawValue {
+						interpolatedObjects = append(interpolatedObjects, &String{Value: v.String()})
+						continue
+					}
+				}
+			}
+		}
+		evaluated := Eval(v, scope)
+		if evaluated.Type() == ERROR_OBJ {
+			evaluated = &String{Value: v.String()}
+		}
+		interpolatedObjects = append(interpolatedObjects, evaluated)
 	}
 	var out bytes.Buffer
 	objIndex := 0
 	for i := 0; i < len(is.RawValue); i++ {
-		if is.RawValue[i] == 0x7b && is.RawValue[i+1] != 0x7d {
-			for p := 1; p < len(is.RawValue); p++ {
+		if is.RawValue[i] == LBRACE {
+			i++
+			if is.RawValue[i] == RBRACE {
+				out.WriteString("{}")
 				i++
-				if is.RawValue[p] == 0x7d {
-					out.WriteString(interpolatedObjects[0].Inspect())
-					objIndex++
-					break
-				}
+				continue
+			}
+			obj := interpolatedObjects[objIndex]
+			out.WriteString(obj.Inspect())
+			objIndex++
+			for is.RawValue[i-1] != RBRACE {
+				i++
+				continue
 			}
 		}
+		fmt.Println(i, len(is.RawValue))
 		out.WriteByte(is.RawValue[i])
 	}
 

@@ -31,7 +31,7 @@ func (l *Lexer) pause() {
 
 func (l *Lexer) unPause() {
 	l.interpolation = true
-	l.paused = true
+	l.paused = false
 }
 
 func (l *Lexer) readChar() {
@@ -52,13 +52,18 @@ func (l *Lexer) peekChar() byte {
 }
 
 func (l *Lexer) NextToken() token.Token {
+	// fmt.Println(string(l.ch), "Is paused: ", l.paused, "} && paused: ", (l.paused && l.ch == '}'), "not ': ", !isSingleQuote(l.peekChar()))
+	if l.ch == 0 {
+		return newToken(token.EOF, l.ch)
+	}
 	var tok token.Token
+
 	if l.paused && l.ch == '}' {
-		tok = newToken(token.RBRACE, l.ch)
-		if !isQuote(l.peekChar()) {
-			l.unPause()
-			l.readChar()
-		}
+		tok = newToken(token.BYTES, l.ch)
+		// if !isSingleQuote(l.peekChar()) {
+		l.unPause()
+		l.readChar()
+		// }
 		return tok
 	}
 	if l.interpolation {
@@ -68,11 +73,10 @@ func (l *Lexer) NextToken() token.Token {
 			l.readChar()
 			return tok
 		}
-		if l.ch == '{' && l.peekChar() != '}' {
+		if l.ch == '{' {
 			l.pause()
 			l.readChar()
-			exp := l.NextToken()
-			return exp
+			return newToken(token.LBRACE, l.ch)
 		}
 		tok = newToken(token.BYTES, l.ch)
 		l.readChar()
