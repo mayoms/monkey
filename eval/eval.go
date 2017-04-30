@@ -144,11 +144,8 @@ func evalStringLiteral(s *ast.StringLiteral) Object {
 }
 
 func evalInterpolatedString(is *ast.InterpolatedString, scope *Scope) Object {
-	s := &InterpolatedString{Value: &String{}, RawValue: is.Value}
-	for _, v := range is.ExprList {
-		s.Expressions = append(s.Expressions, Eval(v, scope))
-	}
-	s.Interpolate()
+	s := &InterpolatedString{Value: &String{}, RawValue: is.Value, Expressions: is.ExprList}
+	s.Interpolate(scope)
 	return s
 }
 
@@ -163,6 +160,10 @@ func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
 		if val, ok = includeScope.Get(i.String()); !ok {
 			return newError(UNKNOWNIDENT, i.String())
 		}
+	}
+	if i, ok := val.(*InterpolatedString); ok {
+		i.Interpolate(scope)
+		return i
 	}
 	return val
 }

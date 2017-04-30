@@ -2,12 +2,17 @@ package eval
 
 import (
 	"bytes"
+	"monkey/ast"
 )
 
 type InterpolatedString struct {
 	Value       *String
 	RawValue    string
-	Expressions []Object
+	Expressions []ast.Expression
+}
+
+type Interpolable interface {
+	Interpolate(scope *Scope)
 }
 
 func (is *InterpolatedString) Inspect() string  { return `"` + is.Value.Value + `"` }
@@ -16,7 +21,11 @@ func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
 	return is.Value.CallMethod(method, args...)
 }
 
-func (is *InterpolatedString) Interpolate() {
+func (is *InterpolatedString) Interpolate(scope *Scope) {
+	interpolatedObjects := []Object{}
+	for _, v := range is.Expressions {
+		interpolatedObjects = append(interpolatedObjects, Eval(v, scope))
+	}
 	var out bytes.Buffer
 	objIndex := 0
 	for i := 0; i < len(is.RawValue); i++ {
@@ -24,7 +33,7 @@ func (is *InterpolatedString) Interpolate() {
 			for p := 1; p < len(is.RawValue); p++ {
 				i++
 				if is.RawValue[p] == 0x7d {
-					out.WriteString(is.Expressions[0].Inspect())
+					out.WriteString(interpolatedObjects[0].Inspect())
 					objIndex++
 					break
 				}
@@ -32,12 +41,13 @@ func (is *InterpolatedString) Interpolate() {
 		}
 		out.WriteByte(is.RawValue[i])
 	}
+
 	is.Value.Value = out.String()
 }
 
 type String struct{ Value string }
 
-func (s *String) Inspect() string  { return `"` + s.Value + `"` }
+func (s *String) Inspect() string  { return s.Value }
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) CallMethod(method string, args ...Object) Object {
 
