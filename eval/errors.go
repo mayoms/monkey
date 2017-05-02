@@ -33,7 +33,6 @@ var errorType = map[int]string{
 	INPUTERROR:    "unsupported input type '%s' for function or method: %s",
 	RTERROR:       "return type should be %s",
 	CONSTRUCTERR:  "%s argument for addm should be type %s. got=%s",
-	ISLOOP:        "interpolated string cannot interpolate itself",
 }
 
 func newError(t int, args ...interface{}) Object {
