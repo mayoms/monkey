@@ -17,6 +17,42 @@ var builtins map[string]*Builtin
 
 func init() {
 	builtins = map[string]*Builtin{
+		"addm": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 3 {
+					return newError(ARGUMENTERROR, "2", len(args))
+				}
+				st, ok := args[0].(*Struct)
+				if !ok {
+					return newError(CONSTRUCTERR, "first", st.Type(), args[0].Type())
+				}
+				name, ok := args[1].(*String)
+				if !ok {
+					return newError(CONSTRUCTERR, "second", name.Type(), args[1].Type())
+				}
+				fn, ok := args[2].(*Function)
+				if !ok {
+					return newError(CONSTRUCTERR, "second", name.Type(), args[1].Type())
+				}
+				st.methods[name.Value] = fn
+				return NULL
+			},
+		},
+		"chr": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				i, ok := args[0].(*Integer)
+				if !ok {
+					return newError(INPUTERROR, args[0].Type(), "chr")
+				}
+				if i.Value < 0 || i.Value > 255 {
+					return newError(INPUTERROR, i.Inspect(), "chr")
+				}
+				return &String{Value: string(i.Value)}
+			},
+		},
 		"int": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 1 {
@@ -80,30 +116,24 @@ func init() {
 				return methods
 			},
 		},
+		"ord": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				s, ok := args[0].(*String)
+				if !ok {
+					return newError(INPUTERROR, args[0].Type(), "ord")
+				}
+				if len(s.Value) > 1 {
+					return newError(INLENERR, "1", len(s.Value))
+				}
+				return &Integer{Value: int64(s.Value[0])}
+			},
+		},
 		"puts": &Builtin{
 			Fn: func(args ...Object) Object {
 				fmt.Println(args[0].Inspect())
-				return NULL
-			},
-		},
-		"addm": &Builtin{
-			Fn: func(args ...Object) Object {
-				if len(args) != 3 {
-					return newError(ARGUMENTERROR, "2", len(args))
-				}
-				st, ok := args[0].(*Struct)
-				if !ok {
-					return newError(CONSTRUCTERR, "first", st.Type(), args[0].Type())
-				}
-				name, ok := args[1].(*String)
-				if !ok {
-					return newError(CONSTRUCTERR, "second", name.Type(), args[1].Type())
-				}
-				fn, ok := args[2].(*Function)
-				if !ok {
-					return newError(CONSTRUCTERR, "second", name.Type(), args[1].Type())
-				}
-				st.methods[name.Value] = fn
 				return NULL
 			},
 		},
