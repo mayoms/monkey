@@ -2,11 +2,84 @@ package eval
 
 import (
 	"bytes"
+	"monkey/ast"
 )
+
+type InterpolatedString struct {
+	Value       *String
+	RawValue    string
+	Expressions map[byte]ast.Expression
+}
+
+type Interpolable interface {
+	Interpolate(scope *Scope)
+}
+
+func (is *InterpolatedString) Inspect() string  { return is.Value.Value }
+func (is *InterpolatedString) Type() ObjectType { return STRING_OBJ }
+func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
+	return is.Value.CallMethod(method, args...)
+}
+
+func (is *InterpolatedString) Interpolate(scope *Scope) {
+	var out bytes.Buffer
+
+	objIndex := "0"[0]
+	ol := len(is.Expressions)
+	if ol == 0 {
+		is.Value.Value = is.RawValue
+		return
+	}
+	mStr := "{" + string(objIndex) + "}"
+	sl := len(is.RawValue)
+	ml := len(mStr)
+
+	for i := 0; i < sl; i++ {
+		if i+ml > sl {
+			out.WriteString(is.RawValue[i:])
+			break
+		}
+		if is.RawValue[i:i+ml] == mStr {
+			v := is.evalInterpExpression(is.Expressions[objIndex], scope)
+			out.WriteString(v)
+			i += ml - 1
+			objIndex++
+			if (objIndex - 47) > byte(ol) {
+				out.WriteString(is.RawValue[i+1:])
+				break
+			}
+			mStr = "{" + string(objIndex) + "}"
+			ml = len(mStr)
+		} else {
+			out.WriteByte(is.RawValue[i])
+		}
+	}
+	is.Value.Value = out.String()
+}
+
+func (is *InterpolatedString) evalInterpExpression(exp ast.Expression, s *Scope) string {
+	_, ok := exp.(*ast.Identifier)
+	if ok {
+		sv, ok := s.Get(exp.String())
+		if ok {
+			iss, ok := sv.(*InterpolatedString)
+			if ok {
+				if iss.RawValue == is.RawValue {
+					return exp.String()
+				}
+			}
+		}
+	}
+	evaluated := Eval(exp, s)
+	if evaluated.Type() == ERROR_OBJ {
+		return exp.String()
+	}
+	return evaluated.Inspect()
+}
 
 type String struct{ Value string }
 
-func (s *String) Inspect() string  { return `"` + s.Value + `"` }
+func (s *String) Inspect() string  { return s.Value }
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) CallMethod(method string, args ...Object) Object {
 

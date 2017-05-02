@@ -17,6 +17,7 @@ const (
 	INPUTERROR
 	RTERROR
 	CONSTRUCTERR
+	ISLOOP
 )
 
 var errorType = map[int]string{

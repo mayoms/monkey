@@ -216,6 +216,40 @@ func TestStringLiteralExpression(t *testing.T) {
 
 }
 
+func TestInterpolatedString(t *testing.T) {
+	tests := []struct {
+		input     string
+		expected  string
+		argscount int
+	}{
+		{`'{hello}{x}{world}'`, "{0}{1}{2}", 3},
+		{"'abc{x}'", "abc{0}", 1},
+		{"'{x}{x}{x}'", "{0}{1}{2}", 3},
+		{"'aa{x(x)}{x}{x+1}aa'", "aa{0}{1}{2}aa", 3},
+		{"'aa{[1,2,3]}{x()}{x+1}aa'", "aa{0}{1}{2}aa", 3},
+		{"'aa{[1,2,3]}b{x()}c{x+1}aa'", "aa{0}b{1}c{2}aa", 3},
+		{"'aa{x+1}abc'", "aa{0}abc", 1},
+	}
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l, path)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		is, ok := stmt.Expression.(*ast.InterpolatedString)
+		if !ok {
+			t.Fatalf("exp not *ast.InterpolatedString. got=%T", stmt.Expression)
+		}
+		if is.Value != tt.expected {
+			t.Fatalf("is.Value not %s, got=%s", tt.expected, is.Value)
+		}
+		if len(is.ExprMap) != tt.argscount {
+			t.Fatalf("is.ExprList has wrong number of expressions. expected=%d, got=%d", tt.argscount, len(is.ExprMap))
+		}
+	}
+}
+
 func TestLetStatements(t *testing.T) {
 	tests := []struct {
 		input              string

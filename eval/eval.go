@@ -31,6 +31,8 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalIntegerLiteral(node)
 	case *ast.StringLiteral:
 		return evalStringLiteral(node)
+	case *ast.InterpolatedString:
+		return evalInterpolatedString(node, scope)
 	case *ast.Identifier:
 		return evalIdentifier(node, scope)
 	case *ast.ArrayLiteral:
@@ -141,6 +143,12 @@ func evalStringLiteral(s *ast.StringLiteral) Object {
 	return &String{Value: s.Value}
 }
 
+func evalInterpolatedString(is *ast.InterpolatedString, scope *Scope) Object {
+	s := &InterpolatedString{Value: &String{}, RawValue: is.Value, Expressions: is.ExprMap}
+	s.Interpolate(scope)
+	return s
+}
+
 func evalArrayLiteral(a *ast.ArrayLiteral, scope *Scope) Object {
 	return &Array{Members: evalArgs(a.Members, scope)}
 }
@@ -152,6 +160,10 @@ func evalIdentifier(i *ast.Identifier, scope *Scope) Object {
 		if val, ok = includeScope.Get(i.String()); !ok {
 			return newError(UNKNOWNIDENT, i.String())
 		}
+	}
+	if i, ok := val.(*InterpolatedString); ok {
+		i.Interpolate(scope)
+		return i
 	}
 	return val
 }

@@ -86,6 +86,7 @@ func New(l *lexer.Lexer, wd string) *Parser {
 	p.registerPrefix(token.LBRACKET, p.parseArrayExpression)
 	p.registerPrefix(token.LBRACE, p.parseHashExpression)
 	p.registerPrefix(token.STRUCT, p.parseStructExpression)
+	p.registerPrefix(token.ISTRING, p.parseInterpolatedString)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -233,6 +234,11 @@ func (p *Parser) curPrecedence() int {
 
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
+	p.peekToken = p.l.NextToken()
+}
+
+func (p *Parser) nextInterpToken() {
+	p.curToken = p.l.NextInterpToken()
 	p.peekToken = p.l.NextToken()
 }
 

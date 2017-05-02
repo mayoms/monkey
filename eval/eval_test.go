@@ -8,6 +8,11 @@ import (
 	"testing"
 )
 
+func TestChainedCalled(t *testing.T) {
+	input := `[1,2,3].map(fn(x) { x + 1 }).map(fn(x) { x * 5 }).filter(fn(x) { x > 10 }).pop()`
+	testEval(input)
+}
+
 func TestStructObjects(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -348,14 +353,14 @@ func TestHashMethods(t *testing.T) {
 		expected interface{}
 	}{
 		{`{1->"a", 2->"b"}.pop(1)`, "a"},
-		{`let a = {1->"a", 2->"b"}; a.pop(1); str(a)`, `{2-> "b"}`},
+		{`let a = {1->"a", 2->"b"}; a.pop(1); str(a)`, `{2-> b}`},
 		{`let a = {1->"a", 2->"b"}.push(3, "c"); a[3]`, `c`},
 		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); c[3]`, `c`},
 		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); str(a[3])`, `null`},
 		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); str(b[1])`, `null`},
-		{`let a = {"a"->1}.map(fn(k, v){ {k.upper()->v+1} } ); str(a)`, `{"A"-> 2}`},
-		{`let a = {"a"->1, "b"->2}.filter(fn(k, v){ v > 1 } ); str(a)`, `{"b"-> 2}`},
-		{`str({"a"->1}.keys())`, `["a"]`},
+		{`let a = {"a"->1}.map(fn(k, v){ {k.upper()->v+1} } ); str(a)`, `{A-> 2}`},
+		{`let a = {"a"->1, "b"->2}.filter(fn(k, v){ v > 1 } ); str(a)`, `{b-> 2}`},
+		{`str({"a"->1}.keys())`, `[a]`},
 		{`str({"a"->1}.values())`, `[1]`},
 	}
 	for _, tt := range tests {
@@ -383,7 +388,7 @@ func TestArrayMethods(t *testing.T) {
 		{`let a = [1,2,3].filter(fn(x) { x > 1}); str(a)`, `[2, 3]`},
 		{`let a = [1,2,3].map(fn(x) { x + 1}); str(a)`, `[2, 3, 4]`},
 		{`let a = [1,2,3].merge([4]); str(a)`, `[1, 2, 3, 4]`},
-		{`let a = ["a","b","c","d"].map(fn(x){ x.upper() }); str(a)`, `["A", "B", "C", "D"]`},
+		{`let a = ["a","b","c","d"].map(fn(x){ x.upper() }); str(a)`, `[A, B, C, D]`},
 		{`["a","b","c","d"].index("d")`, 3},
 		{`[1,1,1,2,3].count(1)`, 3},
 		{`[1,2,3,4,5].reduce(fn(x, y) { x + y})`, 15},
@@ -826,6 +831,40 @@ func testStringObject(t *testing.T, obj Object, expected string) bool {
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got='%s', want='%s'", result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func TestInterpolation(t *testing.T) {
+	input := []struct {
+		input    string
+		expected string
+	}{
+		{`let x = 5; 'abc{x}'`, "abc5"},
+		{`'abc{x}'`, "abcx"},
+		{`'abc{5 + 5}abc'`, "abc10abc"},
+		{`let x = fn(x) { x * 5 };'{x(1)}{x(5)}{x(10)}'`, "52550"},
+		{`let x = fn(x) { x * 5 };'abcdef{x(10)}'`, "abcdef50"},
+		{`'abcdef{(10 * 5)}'`, "abcdef50"},
+		{`'{10 + 10}abcdef{(10 * 5)}'`, "20abcdef50"},
+		{`let x = 5; let y = '{x}';'{y}abcdef{(10 * x)}'`, "5abcdef50"},
+	}
+
+	for _, tt := range input {
+		evaluated := testEval(tt.input)
+		testInterpolatedStringObject(t, evaluated, tt.expected)
+	}
+}
+
+func testInterpolatedStringObject(t *testing.T, obj Object, expected string) bool {
+	result, ok := obj.(*InterpolatedString)
+	if !ok {
+		t.Errorf("object is not String. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Inspect() != expected {
+		t.Errorf("object has wrong value. got='%s', want='%s'", result.Inspect(), expected)
 		return false
 	}
 	return true
