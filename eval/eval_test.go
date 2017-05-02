@@ -353,14 +353,14 @@ func TestHashMethods(t *testing.T) {
 		expected interface{}
 	}{
 		{`{1->"a", 2->"b"}.pop(1)`, "a"},
-		{`let a = {1->"a", 2->"b"}; a.pop(1); str(a)`, `{2-> "b"}`},
+		{`let a = {1->"a", 2->"b"}; a.pop(1); str(a)`, `{2-> b}`},
 		{`let a = {1->"a", 2->"b"}.push(3, "c"); a[3]`, `c`},
 		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); c[3]`, `c`},
 		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); str(a[3])`, `null`},
 		{`let a = {1->"a", 2->"b"}; let b = {3->"c"} let c = a.merge(b); str(b[1])`, `null`},
-		{`let a = {"a"->1}.map(fn(k, v){ {k.upper()->v+1} } ); str(a)`, `{"A"-> 2}`},
-		{`let a = {"a"->1, "b"->2}.filter(fn(k, v){ v > 1 } ); str(a)`, `{"b"-> 2}`},
-		{`str({"a"->1}.keys())`, `["a"]`},
+		{`let a = {"a"->1}.map(fn(k, v){ {k.upper()->v+1} } ); str(a)`, `{A-> 2}`},
+		{`let a = {"a"->1, "b"->2}.filter(fn(k, v){ v > 1 } ); str(a)`, `{b-> 2}`},
+		{`str({"a"->1}.keys())`, `[a]`},
 		{`str({"a"->1}.values())`, `[1]`},
 	}
 	for _, tt := range tests {
@@ -388,7 +388,7 @@ func TestArrayMethods(t *testing.T) {
 		{`let a = [1,2,3].filter(fn(x) { x > 1}); str(a)`, `[2, 3]`},
 		{`let a = [1,2,3].map(fn(x) { x + 1}); str(a)`, `[2, 3, 4]`},
 		{`let a = [1,2,3].merge([4]); str(a)`, `[1, 2, 3, 4]`},
-		{`let a = ["a","b","c","d"].map(fn(x){ x.upper() }); str(a)`, `["A", "B", "C", "D"]`},
+		{`let a = ["a","b","c","d"].map(fn(x){ x.upper() }); str(a)`, `[A, B, C, D]`},
 		{`["a","b","c","d"].index("d")`, 3},
 		{`[1,1,1,2,3].count(1)`, 3},
 		{`[1,2,3,4,5].reduce(fn(x, y) { x + y})`, 15},

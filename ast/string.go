@@ -12,9 +12,9 @@ func (s *StringLiteral) TokenLiteral() string { return s.Token.Literal }
 func (s *StringLiteral) String() string       { return s.Token.Literal }
 
 type InterpolatedString struct {
-	Token    token.Token
-	Value    string
-	ExprList []Expression
+	Token   token.Token
+	Value   string
+	ExprMap map[byte]Expression
 }
 
 func (is *InterpolatedString) expressionNode()      {}

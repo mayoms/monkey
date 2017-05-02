@@ -8,7 +8,7 @@ import (
 type InterpolatedString struct {
 	Value       *String
 	RawValue    string
-	Expressions []ast.Expression
+	Expressions map[byte]ast.Expression
 }
 
 type Interpolable interface {
@@ -24,11 +24,15 @@ func (is *InterpolatedString) CallMethod(method string, args ...Object) Object {
 func (is *InterpolatedString) Interpolate(scope *Scope) {
 	var out bytes.Buffer
 
-	objIndex := 0
-	mStr := "{" + is.Expressions[objIndex].String() + "}"
+	objIndex := "0"[0]
+	ol := len(is.Expressions)
+	if ol == 0 {
+		is.Value.Value = is.RawValue
+		return
+	}
+	mStr := "{" + string(objIndex) + "}"
 	sl := len(is.RawValue)
 	ml := len(mStr)
-	ol := len(is.Expressions)
 
 	for i := 0; i < sl; i++ {
 		if i+ml > sl {
@@ -37,14 +41,14 @@ func (is *InterpolatedString) Interpolate(scope *Scope) {
 		}
 		if is.RawValue[i:i+ml] == mStr {
 			v := is.evalInterpExpression(is.Expressions[objIndex], scope)
-			out.WriteString(v.Inspect())
-			i += ml
+			out.WriteString(v)
+			i += ml - 1
 			objIndex++
-			if objIndex+1 > ol {
-				out.WriteString(is.RawValue[i:])
+			if (objIndex - 47) > byte(ol) {
+				out.WriteString(is.RawValue[i+1:])
 				break
 			}
-			mStr = "{" + is.Expressions[objIndex].String() + "}"
+			mStr = "{" + string(objIndex) + "}"
 			ml = len(mStr)
 		} else {
 			out.WriteByte(is.RawValue[i])
@@ -53,7 +57,7 @@ func (is *InterpolatedString) Interpolate(scope *Scope) {
 	is.Value.Value = out.String()
 }
 
-func (is *InterpolatedString) evalInterpExpression(exp ast.Expression, s *Scope) Object {
+func (is *InterpolatedString) evalInterpExpression(exp ast.Expression, s *Scope) string {
 	_, ok := exp.(*ast.Identifier)
 	if ok {
 		sv, ok := s.Get(exp.String())
@@ -61,16 +65,16 @@ func (is *InterpolatedString) evalInterpExpression(exp ast.Expression, s *Scope)
 			iss, ok := sv.(*InterpolatedString)
 			if ok {
 				if iss.RawValue == is.RawValue {
-					return &String{Value: exp.String()}
+					return exp.String()
 				}
 			}
 		}
 	}
 	evaluated := Eval(exp, s)
 	if evaluated.Type() == ERROR_OBJ {
-		evaluated = &String{Value: exp.String()}
+		return exp.String()
 	}
-	return evaluated
+	return evaluated.Inspect()
 }
 
 type String struct{ Value string }

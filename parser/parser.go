@@ -237,6 +237,11 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
+func (p *Parser) nextInterpToken() {
+	p.curToken = p.l.NextInterpToken()
+	p.peekToken = p.l.NextToken()
+}
+
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()

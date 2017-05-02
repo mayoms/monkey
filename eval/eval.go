@@ -144,7 +144,7 @@ func evalStringLiteral(s *ast.StringLiteral) Object {
 }
 
 func evalInterpolatedString(is *ast.InterpolatedString, scope *Scope) Object {
-	s := &InterpolatedString{Value: &String{}, RawValue: is.Value, Expressions: is.ExprList}
+	s := &InterpolatedString{Value: &String{}, RawValue: is.Value, Expressions: is.ExprMap}
 	s.Interpolate(scope)
 	return s
 }
