@@ -17,6 +17,21 @@ var builtins map[string]*Builtin
 
 func init() {
 	builtins = map[string]*Builtin{
+		"abs": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				i, ok := args[0].(*Integer)
+				if !ok {
+					return newError(INPUTERROR, args[0].Type(), "abs")
+				}
+				if i.Value > -1 {
+					return i
+				}
+				return &Integer{Value: i.Value * -1}
+			},
+		},
 		"addm": &Builtin{
 			Fn: func(args ...Object) Object {
 				if len(args) != 3 {
