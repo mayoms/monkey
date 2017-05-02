@@ -25,6 +25,5 @@ func (p *Parser) parseInterpolatedString() ast.Expression {
 			break
 		}
 	}
-	p.nextToken()
 	return is
 }
