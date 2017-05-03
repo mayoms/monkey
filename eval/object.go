@@ -22,6 +22,7 @@ const (
 	HASH_OBJ         = "HASH"
 	INCLUDED_OBJ     = "INCLUDE"
 	STRUCT_OBJ       = "STRUCT"
+	FILE_OBJ         = "FILE"
 )
 
 type Object interface {
