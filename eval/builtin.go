@@ -82,7 +82,7 @@ func init() {
 				if err != nil {
 					return &Error{Message: err.Error()}
 				}
-				return &FileObject{File: f}
+				return &FileObject{File: f, Name: "<file object: " + s.Value + ">"}
 			},
 		},
 		"int": &Builtin{

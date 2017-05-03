@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"monkey/ast"
@@ -34,18 +35,40 @@ type Object interface {
 
 type FileObject struct {
 	File *os.File
+	Name string
 }
 
-func (f *FileObject) Inspect() string  { return "open file object" }
+func (f *FileObject) Inspect() string  { return f.Name }
 func (f *FileObject) Type() ObjectType { return FILE_OBJ }
 func (f *FileObject) CallMethod(method string, args ...Object) Object {
 	switch method {
 	case "close":
 		f.File.Close()
 		return NULL
+	case "read":
+		return f.Read(args...)
 	default:
 		return newError(NOMETHODERROR, method, f.Type())
 	}
+}
+
+func (f *FileObject) Read(args ...Object) Object {
+	if len(args) != 0 {
+		return newError(ARGUMENTERROR, "0", len(args))
+	}
+	fs := bufio.NewScanner(f.File)
+	var out bytes.Buffer
+	for {
+		scanned := fs.Scan()
+		out.WriteString(fs.Text())
+		if !scanned {
+			break
+		}
+		if err := fs.Err(); err != nil {
+			return &Error{Message: err.Error()}
+		}
+	}
+	return &String{Value: out.String()}
 }
 
 type Struct struct {
