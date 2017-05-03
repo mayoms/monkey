@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -66,6 +67,22 @@ func init() {
 					return newError(INPUTERROR, i.Inspect(), "chr")
 				}
 				return &String{Value: string(i.Value)}
+			},
+		},
+		"open": &Builtin{
+			Fn: func(args ...Object) Object {
+				if len(args) != 1 {
+					return newError(ARGUMENTERROR, "1", len(args))
+				}
+				s, ok := args[0].(*String)
+				if !ok {
+					return newError(INPUTERROR, args[0].Type(), "ord")
+				}
+				f, err := os.Open(s.Value)
+				if err != nil {
+					return &Error{Message: err.Error()}
+				}
+				return &FileObject{File: f}
 			},
 		},
 		"int": &Builtin{

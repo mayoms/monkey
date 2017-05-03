@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"monkey/ast"
+	"os"
 )
 
 type ObjectType string
@@ -32,13 +33,19 @@ type Object interface {
 }
 
 type FileObject struct {
-	File *File
+	File *os.File
 }
 
-func (f *FileObject) Inspect() string { return "open file object" }
-func (f *FileObject) Type() string    { return FILE_OBJ }
-func (f *FileObject) CallMethod(method string, args ...Object) {
-	return newError(NOMETHODERROR, method, f.Type())
+func (f *FileObject) Inspect() string  { return "open file object" }
+func (f *FileObject) Type() ObjectType { return FILE_OBJ }
+func (f *FileObject) CallMethod(method string, args ...Object) Object {
+	switch method {
+	case "close":
+		f.File.Close()
+		return NULL
+	default:
+		return newError(NOMETHODERROR, method, f.Type())
+	}
 }
 
 type Struct struct {
