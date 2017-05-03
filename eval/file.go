@@ -2,7 +2,7 @@ package eval
 
 import (
 	"bufio"
-	"bytes"
+	"io/ioutil"
 	"os"
 )
 
@@ -32,19 +32,12 @@ func (f *FileObject) Read(args ...Object) Object {
 	if len(args) != 0 {
 		return newError(ARGUMENTERROR, "0", len(args))
 	}
-	fs := bufio.NewScanner(f.File)
-	var out bytes.Buffer
-	for {
-		scanned := fs.Scan()
-		out.WriteString(fs.Text())
-		if !scanned {
-			break
-		}
-		if err := fs.Err(); err != nil {
-			return &Error{Message: err.Error()}
-		}
+	reader := bufio.NewReader(f.File)
+	fc, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return &Error{Message: err.Error()}
 	}
-	return &String{Value: out.String()}
+	return &String{Value: string(fc)}
 }
 
 func (f *FileObject) ReadLine(args ...Object) Object {

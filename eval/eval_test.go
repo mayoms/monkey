@@ -8,6 +8,30 @@ import (
 	"testing"
 )
 
+func TestFileObjects(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`let f = open("../parser/test_files/module.my");str(f)`, "<file object: ../parser/test_files/module.my>"},
+		{`let f = open("../parser/test_files/module.my");f.read()`, `include eval
+include test
+include sub_package`},
+		{`let f = open("../parser/test_files/module.my");f.readline()`, "include eval"},
+		{`let f = open("../parser/test_files/module.my");f.readline();f.readline()`, "include test"},
+		{`let f = open("../parser/test_files/module.my");f.readline();f.readline();f.readline()`, "include sub_package"},
+	}
+	d, _ := os.Getwd()
+	fmt.Println(d)
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case string:
+			testStringObject(t, evaluated, expected)
+		}
+	}
+}
+
 func TestChainedCalled(t *testing.T) {
 	input := `[1,2,3].map(fn(x) { x + 1 }).map(fn(x) { x * 5 }).filter(fn(x) { x > 10 }).pop()`
 	testEval(input)
