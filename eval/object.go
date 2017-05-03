@@ -22,12 +22,23 @@ const (
 	HASH_OBJ         = "HASH"
 	INCLUDED_OBJ     = "INCLUDE"
 	STRUCT_OBJ       = "STRUCT"
+	FILE_OBJ         = "FILE"
 )
 
 type Object interface {
 	Type() ObjectType
 	Inspect() string
 	CallMethod(method string, args ...Object) Object
+}
+
+type FileObject struct {
+	File *File
+}
+
+func (f *FileObject) Inspect() string { return "open file object" }
+func (f *FileObject) Type() string    { return FILE_OBJ }
+func (f *FileObject) CallMethod(method string, args ...Object) {
+	return newError(NOMETHODERROR, method, f.Type())
 }
 
 type Struct struct {
