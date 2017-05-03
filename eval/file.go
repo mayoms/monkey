@@ -17,8 +17,7 @@ func (f *FileObject) Type() ObjectType { return FILE_OBJ }
 func (f *FileObject) CallMethod(method string, args ...Object) Object {
 	switch method {
 	case "close":
-		f.File.Close()
-		return NULL
+		return f.Close()
 	case "read":
 		return f.Read(args...)
 	case "readline":
@@ -26,6 +25,14 @@ func (f *FileObject) CallMethod(method string, args ...Object) Object {
 	default:
 		return newError(NOMETHODERROR, method, f.Type())
 	}
+}
+
+func (f *FileObject) Close(args ...Object) Object {
+	if len(args) != 0 {
+		return newError(ARGUMENTERROR, "0", len(args))
+	}
+	f.File.Close()
+	return NULL
 }
 
 func (f *FileObject) Read(args ...Object) Object {
