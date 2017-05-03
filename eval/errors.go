@@ -17,7 +17,7 @@ const (
 	INPUTERROR
 	RTERROR
 	CONSTRUCTERR
-	ISLOOP
+	INLENERR
 )
 
 var errorType = map[int]string{
@@ -33,6 +33,7 @@ var errorType = map[int]string{
 	INPUTERROR:    "unsupported input type '%s' for function or method: %s",
 	RTERROR:       "return type should be %s",
 	CONSTRUCTERR:  "%s argument for addm should be type %s. got=%s",
+	INLENERR:      "function %s takes input with max length %s. got=%s",
 }
 
 func newError(t int, args ...interface{}) Object {
