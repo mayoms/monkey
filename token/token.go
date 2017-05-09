@@ -46,6 +46,8 @@ const (
 	AND      = "AND"
 	OR       = "OR"
 	STRUCT   = "STRUCT"
+	WHILE    = "WHILE"
+	BREAK    = "BREAK"
 )
 
 var keywords = map[string]TokenType{
@@ -60,6 +62,8 @@ var keywords = map[string]TokenType{
 	"and":     AND,
 	"or":      OR,
 	"struct":  STRUCT,
+	"while":   WHILE,
+	"break":   BREAK,
 }
 
 type TokenType string

@@ -32,6 +32,22 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
+type BreakStatement struct {
+	Token token.Token
+}
+
+func (bs *BreakStatement) statementNode()       {}
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+
+func (bs *BreakStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(bs.TokenLiteral())
+	out.WriteString(";")
+
+	return out.String()
+}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier

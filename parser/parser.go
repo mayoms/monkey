@@ -82,6 +82,7 @@ func New(l *lexer.Lexer, wd string) *Parser {
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
+	p.registerPrefix(token.WHILE, p.parseWhileLoopExpression)
 	p.registerPrefix(token.STRING, p.parseStringLiteralExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayExpression)
 	p.registerPrefix(token.LBRACE, p.parseHashExpression)
@@ -140,6 +141,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.INCLUDE:
 		return p.parseIncludeStatement()
+	case token.BREAK:
+		return p.parseBreakStatement()
 	default:
 		return p.parseExpressionStatement()
 	}

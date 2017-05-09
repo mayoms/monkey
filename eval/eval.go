@@ -57,6 +57,10 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalMethodCallExpression(node, scope)
 	case *ast.IndexExpression:
 		return evalIndexExpression(node, scope)
+	case *ast.WhileLoop:
+		return evalWhileLoopExpression(node, scope)
+	case *ast.BreakStatement:
+		return &Break{}
 	}
 	return nil
 }
@@ -335,6 +339,20 @@ func evalIfExpression(ie *ast.IfExpression, s *Scope) Object {
 	return NULL
 }
 
+func evalWhileLoopExpression(wl *ast.WhileLoop, s *Scope) Object {
+	for {
+		if isTrue(Eval(wl.Condition, s)) {
+			e := Eval(wl.Block, s)
+			if _, ok := e.(*Break); ok {
+				break
+			}
+		} else {
+			break
+		}
+	}
+	return NULL
+}
+
 // Helper function isTrue for IF evaluation - neccessity is dubious
 func isTrue(obj Object) bool {
 	switch obj {
@@ -356,6 +374,9 @@ func evalBlockStatements(block []ast.Statement, scope *Scope) (results Object) {
 	for _, statement := range block {
 		results = Eval(statement, scope)
 		if results != nil && results.Type() == RETURN_VALUE_OBJ {
+			return
+		}
+		if _, ok := results.(*Break); ok {
 			return
 		}
 	}

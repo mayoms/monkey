@@ -14,6 +14,7 @@ const (
 	BOOLEAN_OBJ      = "BOOLEAN"
 	NULL_OBJ         = "NULL"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
+	BREAK_OBJ        = "BREAK"
 	ERROR_OBJ        = "ERROR"
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
@@ -126,4 +127,12 @@ func (n *Null) Inspect() string  { return "null" }
 func (n *Null) Type() ObjectType { return NULL_OBJ }
 func (n *Null) CallMethod(method string, args ...Object) Object {
 	return newError(NOMETHODERROR, method, n.Type())
+}
+
+type Break struct{}
+
+func (b *Break) Inspect() string  { return "break" }
+func (b *Break) Type() ObjectType { return BREAK_OBJ }
+func (b *Break) CallMethod(method string, args ...Object) Object {
+	return newError(NOMETHODERROR, method, b.Type())
 }
