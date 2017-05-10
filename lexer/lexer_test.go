@@ -36,7 +36,7 @@ include tests
 x and y
 x or y
 struct
-while
+do
 `
 
 	tests := []struct {
@@ -148,7 +148,7 @@ while
 		{token.OR, "or"},
 		{token.IDENT, "y"},
 		{token.STRUCT, "struct"},
-		{token.DO, "while"},
+		{token.DO, "do"},
 	}
 
 	l := New(input)

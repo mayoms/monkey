@@ -61,7 +61,7 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalDoLoopExpression(node, scope)
 	case *ast.BreakStatement:
 		return &Break{}
-	case *ast.AssignStatement:
+	case *ast.AssignExpression:
 		return evalAssignStatement(node, scope)
 	}
 	return nil
@@ -125,7 +125,7 @@ func evalLetStatement(l *ast.LetStatement, scope *Scope) (val Object) {
 	return
 }
 
-func evalAssignStatement(a *ast.AssignStatement, scope *Scope) (val Object) {
+func evalAssignStatement(a *ast.AssignExpression, scope *Scope) (val Object) {
 	if val = Eval(a.Value, scope); val.Type() != ERROR_OBJ {
 		v, ok := scope.Reset(a.Name.String(), val)
 		if ok {

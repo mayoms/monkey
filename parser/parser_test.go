@@ -11,6 +11,36 @@ import (
 
 var path, _ = os.Getwd()
 
+func TestParsingDoLoopExpression(t *testing.T) {
+	input := `do {}`
+	l := lexer.New(input)
+	p := New(l, path)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	_, ok := stmt.Expression.(*ast.DoLoop)
+	if !ok {
+		t.Fatalf("exp is not ast.DoLoop. got=%T", stmt)
+	}
+}
+
+func TestParsingAssignmentExpressions(t *testing.T) {
+	input := `x = 5`
+	l := lexer.New(input)
+	p := New(l, path)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	a, ok := stmt.Expression.(*ast.AssignExpression)
+	if !ok {
+		t.Fatalf("exp is not ast.AssignExpression. got=%T", stmt)
+	}
+	testIdentifier(t, a.Name, "x")
+
+	testIntegerLiteral(t, a.Value, int64(5))
+}
+
 func TestParsingEmptyHashLiteralExpressions(t *testing.T) {
 	input := `{}`
 	l := lexer.New(input)

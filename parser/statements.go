@@ -41,6 +41,21 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	return stmt
 }
 
+func (p *Parser) parseAssignExpression(name ast.Expression) ast.Expression {
+	e := &ast.AssignExpression{Token: p.curToken}
+
+	if n, ok := name.(*ast.Identifier); ok {
+		e.Name = n
+	} else {
+		msg := fmt.Sprintf("expected assign token to be IDENT, got %s instead", name.TokenLiteral())
+		p.errors = append(p.errors, msg)
+	}
+	p.nextToken()
+	e.Value = p.parseExpression(LOWEST)
+
+	return e
+}
+
 func (p *Parser) parseIncludeStatement() *ast.IncludeStatement {
 	stmt := &ast.IncludeStatement{Token: p.curToken}
 
@@ -80,20 +95,4 @@ func (p *Parser) getIncludedStatements(importpath string) (*ast.Program, bool, e
 		p.errors = append(p.errors, ps.errors...)
 	}
 	return parsed, module, nil
-}
-
-func (p *Parser) parseAssignExpression(name ast.Expression) ast.Expression {
-	fmt.Println("parse assign")
-	stmt := &ast.AssignStatement{Token: p.curToken}
-
-	if n, ok := name.(*ast.Identifier); ok {
-		stmt.Name = n
-	} else {
-		msg := fmt.Sprintf("expected assign token to be IDENT, got %s instead", name.TokenLiteral())
-		p.errors = append(p.errors, msg)
-	}
-	p.nextToken()
-	stmt.Value = p.parseExpression(LOWEST)
-
-	return stmt
 }

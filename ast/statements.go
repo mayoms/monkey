@@ -92,21 +92,21 @@ func (is *IncludeStatement) String() string {
 	return out.String()
 }
 
-type AssignStatement struct {
+type AssignExpression struct {
 	Token token.Token
 	Name  *Identifier
 	Value Expression
 }
 
-func (as *AssignStatement) expressionNode()      {}
-func (as *AssignStatement) TokenLiteral() string { return as.Token.Literal }
+func (ae *AssignExpression) expressionNode()      {}
+func (ae *AssignExpression) TokenLiteral() string { return ae.Token.Literal }
 
-func (as *AssignStatement) String() string {
+func (ae *AssignExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(as.Name.String())
+	out.WriteString(ae.Name.String())
 	out.WriteString(" = ")
-	out.WriteString(as.Value.String())
+	out.WriteString(ae.Value.String())
 
 	return out.String()
 }

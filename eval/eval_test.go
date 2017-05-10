@@ -8,6 +8,35 @@ import (
 	"testing"
 )
 
+func TestDoLoop(t *testing.T) {
+	test := []struct {
+		input    string
+		expected int64
+	}{
+		{"let a = 0; do { if(a == 10) { break } a = a + 1 }; a", 10},
+	}
+
+	for _, tt := range test {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
+
+func TestReassignment(t *testing.T) {
+	test := []struct {
+		input    string
+		expected int64
+	}{
+		{"let a = 5; a = 4;a", 4},
+		{"let a = 5 * 5; a = 5;a", 5},
+		{"let a = 5; let b = a * 5; a = b;a", 25},
+		{"let a = 5; let b = a; let c = a + b + 5; c; b = c;b", 15},
+	}
+
+	for _, tt := range test {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
+
 func TestFileObjects(t *testing.T) {
 	tests := []struct {
 		input    string
