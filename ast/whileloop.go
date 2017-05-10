@@ -5,22 +5,20 @@ import (
 	"monkey/token"
 )
 
-type WhileLoop struct {
-	Token     token.Token
-	Block     *BlockStatement
-	Condition Expression
+type DoLoop struct {
+	Token token.Token
+	Block *BlockStatement
 }
 
-func (wl *WhileLoop) expressionNode()      {}
-func (wl *WhileLoop) TokenLiteral() string { return wl.Token.Literal }
+func (dl *DoLoop) expressionNode()      {}
+func (dl *DoLoop) TokenLiteral() string { return dl.Token.Literal }
 
-func (wl *WhileLoop) String() string {
+func (dl *DoLoop) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("while")
-	out.WriteString(wl.Condition.String())
+	out.WriteString("do")
 	out.WriteString(" { ")
-	out.WriteString(wl.Block.String())
+	out.WriteString(dl.Block.String())
 	out.WriteString(" }")
 	return out.String()
 }

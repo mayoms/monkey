@@ -57,10 +57,12 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalMethodCallExpression(node, scope)
 	case *ast.IndexExpression:
 		return evalIndexExpression(node, scope)
-	case *ast.WhileLoop:
-		return evalWhileLoopExpression(node, scope)
+	case *ast.DoLoop:
+		return evalDoLoopExpression(node, scope)
 	case *ast.BreakStatement:
 		return &Break{}
+	case *ast.AssignStatement:
+		return evalAssignStatement(node, scope)
 	}
 	return nil
 }
@@ -119,6 +121,17 @@ func evalIncludeStatement(i *ast.IncludeStatement, s *Scope) Object {
 func evalLetStatement(l *ast.LetStatement, scope *Scope) (val Object) {
 	if val = Eval(l.Value, scope); val.Type() != ERROR_OBJ {
 		return scope.Set(l.Name.String(), val)
+	}
+	return
+}
+
+func evalAssignStatement(a *ast.AssignStatement, scope *Scope) (val Object) {
+	if val = Eval(a.Value, scope); val.Type() != ERROR_OBJ {
+		v, ok := scope.Reset(a.Name.String(), val)
+		if ok {
+			return v
+		}
+		return newError(UNKNOWNIDENT, a.Name.String())
 	}
 	return
 }
@@ -339,14 +352,10 @@ func evalIfExpression(ie *ast.IfExpression, s *Scope) Object {
 	return NULL
 }
 
-func evalWhileLoopExpression(wl *ast.WhileLoop, s *Scope) Object {
+func evalDoLoopExpression(dl *ast.DoLoop, s *Scope) Object {
 	for {
-		if isTrue(Eval(wl.Condition, s)) {
-			e := Eval(wl.Block, s)
-			if _, ok := e.(*Break); ok {
-				break
-			}
-		} else {
+		e := Eval(dl.Block, NewScope(s))
+		if _, ok := e.(*Break); ok {
 			break
 		}
 	}
