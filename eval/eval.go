@@ -358,6 +358,12 @@ func evalDoLoopExpression(dl *ast.DoLoop, s *Scope) Object {
 		if _, ok := e.(*Break); ok {
 			break
 		}
+		if v, ok := e.(*ReturnValue); ok {
+			if v.Value != nil {
+				return v.Value
+			}
+			break
+		}
 	}
 	return NULL
 }
