@@ -21,9 +21,13 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	return stmt
 }
 
-func (p *Parser) parseBreakStatement() *ast.BreakStatement {
-	stmt := &ast.BreakStatement{Token: p.curToken}
-	return stmt
+func (p *Parser) parseBreakWithoutLoopContext() ast.Expression {
+	p.errors = append(p.errors, "'break' outside of loop context")
+	return p.parseBreakExpression()
+}
+
+func (p *Parser) parseBreakExpression() ast.Expression {
+	return &ast.BreakExpression{Token: p.curToken}
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {

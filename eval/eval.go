@@ -59,7 +59,7 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalIndexExpression(node, scope)
 	case *ast.DoLoop:
 		return evalDoLoopExpression(node, scope)
-	case *ast.BreakStatement:
+	case *ast.BreakExpression:
 		return &Break{}
 	case *ast.AssignExpression:
 		return evalAssignStatement(node, scope)

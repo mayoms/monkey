@@ -90,6 +90,7 @@ func New(l *lexer.Lexer, wd string) *Parser {
 	p.registerPrefix(token.LBRACE, p.parseHashExpression)
 	p.registerPrefix(token.STRUCT, p.parseStructExpression)
 	p.registerPrefix(token.ISTRING, p.parseInterpolatedString)
+	p.registerPrefix(token.BREAK, p.parseBreakWithoutLoopContext)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -144,8 +145,6 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.INCLUDE:
 		return p.parseIncludeStatement()
-	case token.BREAK:
-		return p.parseBreakStatement()
 	default:
 		return p.parseExpressionStatement()
 	}

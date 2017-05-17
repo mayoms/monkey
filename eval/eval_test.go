@@ -14,6 +14,7 @@ func TestDoLoop(t *testing.T) {
 		expected int64
 	}{
 		{"let a = 0; do { if(a == 10) { break } a = a + 1 }; a", 10},
+		{"let a = 0; let b = 0; do { if(a == 10) { break } a = a + 1 do { if(b == 3) { break } b = b + 1 } }; a + b", 13},
 	}
 
 	for _, tt := range test {

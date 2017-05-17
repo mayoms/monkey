@@ -32,21 +32,14 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
-type BreakStatement struct {
+type BreakExpression struct {
 	Token token.Token
 }
 
-func (bs *BreakStatement) statementNode()       {}
-func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+func (be *BreakExpression) expressionNode()      {}
+func (be *BreakExpression) TokenLiteral() string { return be.Token.Literal }
 
-func (bs *BreakStatement) String() string {
-	var out bytes.Buffer
-
-	out.WriteString(bs.TokenLiteral())
-	out.WriteString(";")
-
-	return out.String()
-}
+func (be *BreakExpression) String() string { return be.Token.Literal }
 
 type LetStatement struct {
 	Token token.Token
