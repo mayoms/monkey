@@ -57,6 +57,12 @@ func Eval(node ast.Node, scope *Scope) Object {
 		return evalMethodCallExpression(node, scope)
 	case *ast.IndexExpression:
 		return evalIndexExpression(node, scope)
+	case *ast.DoLoop:
+		return evalDoLoopExpression(node, scope)
+	case *ast.BreakExpression:
+		return &Break{}
+	case *ast.AssignExpression:
+		return evalAssignStatement(node, scope)
 	}
 	return nil
 }
@@ -115,6 +121,17 @@ func evalIncludeStatement(i *ast.IncludeStatement, s *Scope) Object {
 func evalLetStatement(l *ast.LetStatement, scope *Scope) (val Object) {
 	if val = Eval(l.Value, scope); val.Type() != ERROR_OBJ {
 		return scope.Set(l.Name.String(), val)
+	}
+	return
+}
+
+func evalAssignStatement(a *ast.AssignExpression, scope *Scope) (val Object) {
+	if val = Eval(a.Value, scope); val.Type() != ERROR_OBJ {
+		v, ok := scope.Reset(a.Name.String(), val)
+		if ok {
+			return v
+		}
+		return newError(UNKNOWNIDENT, a.Name.String())
 	}
 	return
 }
@@ -335,6 +352,22 @@ func evalIfExpression(ie *ast.IfExpression, s *Scope) Object {
 	return NULL
 }
 
+func evalDoLoopExpression(dl *ast.DoLoop, s *Scope) Object {
+	for {
+		e := Eval(dl.Block, NewScope(s))
+		if _, ok := e.(*Break); ok {
+			break
+		}
+		if v, ok := e.(*ReturnValue); ok {
+			if v.Value != nil {
+				return v.Value
+			}
+			break
+		}
+	}
+	return NULL
+}
+
 // Helper function isTrue for IF evaluation - neccessity is dubious
 func isTrue(obj Object) bool {
 	switch obj {
@@ -356,6 +389,9 @@ func evalBlockStatements(block []ast.Statement, scope *Scope) (results Object) {
 	for _, statement := range block {
 		results = Eval(statement, scope)
 		if results != nil && results.Type() == RETURN_VALUE_OBJ {
+			return
+		}
+		if _, ok := results.(*Break); ok {
 			return
 		}
 	}

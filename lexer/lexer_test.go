@@ -36,7 +36,7 @@ include tests
 x and y
 x or y
 struct
-'foo {bar}'
+do
 `
 
 	tests := []struct {
@@ -148,7 +148,7 @@ struct
 		{token.OR, "or"},
 		{token.IDENT, "y"},
 		{token.STRUCT, "struct"},
-		{token.ISTRING, "foo {bar}"},
+		{token.DO, "do"},
 		{token.EOF, ""},
 	}
 

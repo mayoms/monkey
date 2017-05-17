@@ -21,6 +21,15 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	return stmt
 }
 
+func (p *Parser) parseBreakWithoutLoopContext() ast.Expression {
+	p.errors = append(p.errors, "'break' outside of loop context")
+	return p.parseBreakExpression()
+}
+
+func (p *Parser) parseBreakExpression() ast.Expression {
+	return &ast.BreakExpression{Token: p.curToken}
+}
+
 func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.curToken}
 
@@ -34,6 +43,21 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseAssignExpression(name ast.Expression) ast.Expression {
+	e := &ast.AssignExpression{Token: p.curToken}
+
+	if n, ok := name.(*ast.Identifier); ok {
+		e.Name = n
+	} else {
+		msg := fmt.Sprintf("expected assign token to be IDENT, got %s instead", name.TokenLiteral())
+		p.errors = append(p.errors, msg)
+	}
+	p.nextToken()
+	e.Value = p.parseExpression(LOWEST)
+
+	return e
 }
 
 func (p *Parser) parseIncludeStatement() *ast.IncludeStatement {

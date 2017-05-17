@@ -32,6 +32,15 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
+type BreakExpression struct {
+	Token token.Token
+}
+
+func (be *BreakExpression) expressionNode()      {}
+func (be *BreakExpression) TokenLiteral() string { return be.Token.Literal }
+
+func (be *BreakExpression) String() string { return be.Token.Literal }
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -72,6 +81,25 @@ func (is *IncludeStatement) String() string {
 	out.WriteString(is.TokenLiteral())
 	out.WriteString(" ")
 	out.WriteString(is.IncludePath.String())
+
+	return out.String()
+}
+
+type AssignExpression struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (ae *AssignExpression) expressionNode()      {}
+func (ae *AssignExpression) TokenLiteral() string { return ae.Token.Literal }
+
+func (ae *AssignExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ae.Name.String())
+	out.WriteString(" = ")
+	out.WriteString(ae.Value.String())
 
 	return out.String()
 }

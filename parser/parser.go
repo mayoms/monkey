@@ -10,6 +10,7 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	ASSIGN
 	OR
 	AND
 	EQUALS
@@ -23,6 +24,7 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
+	token.ASSIGN:   ASSIGN,
 	token.OR:       OR,
 	token.AND:      AND,
 	token.EQ:       EQUALS,
@@ -82,11 +84,13 @@ func New(l *lexer.Lexer, wd string) *Parser {
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
+	p.registerPrefix(token.DO, p.parseDoLoopExpression)
 	p.registerPrefix(token.STRING, p.parseStringLiteralExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayExpression)
 	p.registerPrefix(token.LBRACE, p.parseHashExpression)
 	p.registerPrefix(token.STRUCT, p.parseStructExpression)
 	p.registerPrefix(token.ISTRING, p.parseInterpolatedString)
+	p.registerPrefix(token.BREAK, p.parseBreakWithoutLoopContext)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -99,6 +103,7 @@ func New(l *lexer.Lexer, wd string) *Parser {
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.OR, p.parseInfixExpression)
+	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 	p.registerInfix(token.DOT, p.parseMethodCallExpression)
