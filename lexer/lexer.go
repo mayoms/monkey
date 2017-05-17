@@ -97,7 +97,9 @@ func (l *Lexer) readBytesToken() token.Token {
 	var tok token.Token
 	switch {
 	case l.ch == 0:
-		return newToken(token.EOF, l.ch)
+		tok.Literal = ""
+		tok.Type = token.EOF
+		return tok
 	case isLetter(l.ch):
 		tok.Literal = l.readIdentifier()
 		tok.Type = token.LookupIdent(tok.Literal)

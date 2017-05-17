@@ -149,6 +149,7 @@ do
 		{token.IDENT, "y"},
 		{token.STRUCT, "struct"},
 		{token.DO, "do"},
+		{token.EOF, ""},
 	}
 
 	l := New(input)
