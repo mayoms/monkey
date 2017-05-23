@@ -9,6 +9,7 @@ var (
 	TRUE  = &Boolean{Value: true}
 	FALSE = &Boolean{Value: false}
 	NULL  = &Null{}
+	BREAK = &Break{}
 )
 
 var includeScope *Scope
@@ -60,7 +61,7 @@ func Eval(node ast.Node, scope *Scope) Object {
 	case *ast.DoLoop:
 		return evalDoLoopExpression(node, scope)
 	case *ast.BreakExpression:
-		return &Break{}
+		return BREAK
 	case *ast.AssignExpression:
 		return evalAssignStatement(node, scope)
 	}
