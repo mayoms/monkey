@@ -1,0 +1,30 @@
+let times_two = fn(n) {
+  '{n} * 2 = {n * 2 }'
+}
+
+let do_loop = fn() {
+  let x = 0  
+  do {
+    x = x + 1
+    puts(times_two(x))
+    if (x == 10) {
+      puts("x is 10!")
+      break
+    }
+  }
+}
+
+let y = 1; let z = 5;
+do {
+  if (y == 5) {
+    puts("y is 5")
+    do_loop()
+    break
+  }
+  y = y + 1
+}
+z = "a b c d e f".split().map(fn(x) {
+  puts(x.upper())
+  x.upper()
+})
+puts(z)
